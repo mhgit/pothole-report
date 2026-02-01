@@ -1,0 +1,68 @@
+report_url: "https://www.fillthathole.org.uk"
+# Email is stored in keyring. Run: report-pothole setup
+
+# Report templates: add your own and use with -r <key> or --report-name=<key>
+# Road Defect Risk Matrix for Cyclists (UK Council Reporting)
+# Prepared by: Cycling Road Safety Expert
+# Focus: Triggering Council "Section 58" statutory defense awareness and risk-based prioritization.
+
+risk_levels:
+  level_1_emergency:
+    description: "An immediate threat to life and limb. Usually a defect deeper than 50mm with sharp, vertical 'shear' edges, located in a high-speed descent, a braking zone, or a primary cycle line."
+    visual_indicators: "Deep 'crater' style hole, often with exposed sub-base (rubble/dirt). Sharp edges capable of instant tyre deflation or rim destruction. Positioned where a cyclist cannot safely avoid it without darting into fast-moving motor traffic."
+    report_template: >
+      EMERGENCY: Immediate safety hazard to vulnerable road users. This defect exceeds the 50mm intervention 
+      level and is located in the primary line of travel on a [descent/junction]. It presents a critical 
+      risk of rider ejection and catastrophic wheel failure. Cyclists are currently forced to swerve 
+      unpredictably into the path of motor traffic to avoid personal injury. Please attend within 
+      24 hours to mitigate the risk of a serious personal injury claim.
+
+  level_2_high_priority:
+    description: "A significant hazard that meets or exceeds standard intervention levels (40mm). Often obscured or positioned such that it compromises the safety of the road layout."
+    visual_indicators: "A deep pothole (approx. the depth of a fist) that may be frequently filled with standing water or hidden by shadows/overhanging trees. It is situated where a cyclist is expected to be (the nearside or primary position)."
+    report_template: >
+      HIGH RISK: Significant road defect meeting statutory intervention levels. This defect is a 'hidden 
+      hazard' as it is frequently obscured by [standing water/shadows], making it invisible until impact. 
+      Located in the primary line of travel, it creates a high probability of loss of control for cyclists. 
+      Under the Highways Act 1980, this constitutes a failure to maintain the highway in a safe condition 
+      for all users. Urgent repair is requested to prevent a high-speed incident.
+
+  level_3_medium_hazard:
+    description: "Developing defects or 'clusters' of smaller holes that together create a hazardous surface. These often sit just below the 40mm threshold but are dangerous due to their frequency."
+    visual_indicators: "Multiple smaller potholes (crazing/alligator cracking) grouped together. The surface is breaking up, creating loose 'marbles' of gravel. Often found on the approach to roundabouts or junctions where braking occurs."
+    report_template: >
+      HAZARDOUS SURFACE: Multiple progressing defects creating a 'skid hazard' for two-wheeled vehicles. 
+      While individual holes may be sub-intervention, the aggregate effect and presence of loose 
+      detritus (surface fretting) significantly compromise braking and steering stability. As this is 
+      a [junction approach/bend], the risk of a cyclist losing traction is high. Requesting 
+      preventative resurfacing to avoid a full structural failure and subsequent injury.
+
+  level_4_developing_risk:
+    description: "Defects that are currently navigable but are deteriorating rapidly due to weather or traffic volume. These represent a future liability."
+    visual_indicators: "Sunken ironworks (manhole covers) or longitudinal cracking (cracks running parallel to the direction of travel) which can 'trap' a thin bicycle tyre."
+    report_template: >
+      SAFETY CONCERN: Longitudinal cracking and sunken utility cover. This defect presents a 'tramlining' 
+      risk, where bicycle tyres can become trapped, leading to a fall. It is currently forcing 
+      hazardous road positioning. Though the depth is currently borderline, the rate of 
+      deterioration suggests a breach of safety standards is imminent. Early intervention is 
+      advised to maintain the integrity of the cycle route and minimize long-term repair costs.
+
+  level_5_monitoring_nuisance:
+    description: "Minor surface degradation that affects comfort and increases wear and tear, but does not yet present an immediate risk of a fall."
+    visual_indicators: "Early-stage 'fretting' (loss of the top stone layer), minor hairline cracks, or uneven patching from previous repairs."
+    report_template: >
+      MAINTENANCE REQUEST: Early-stage surface failure. The road surface is showing signs of 
+      significant fretting and water ingress. To prevent the development of high-risk potholes 
+      during the next freeze-thaw cycle, this section requires preventative maintenance. 
+      Addressing this now aligns with a 'Right First Time' policy and avoids the higher costs 
+      associated with emergency reactive repairs and potential insurance claims.
+
+advice_for_reporters:
+  key_phrases:
+    - "Primary line of travel"
+    - "Risk of ejection"
+    - "Vulnerable road user"
+    - "Statutory intervention level"
+    - "Highways Act 1980 Section 58"
+    - "Loss of control"
+  pro_tip: "Always include a photo with a common object (like a water bottle or 50p coin) for scale. If the hole is deep, a ruler showing it exceeds 40mm is the 'golden ticket' for council action."
