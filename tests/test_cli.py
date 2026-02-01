@@ -11,7 +11,7 @@ from pothole_report.cli import main
 
 @patch("pothole_report.config._get_email_from_keyring", return_value="test@example.com")
 def test_cli_requires_folder(_mock_keyring: object, temp_config: Path) -> None:
-    """CLI exits with error when -f/--folder is missing (and not --list-reports)."""
+    """CLI exits with error when -f/--folder is missing (and not --list-risk-levels)."""
     with patch.object(sys, "argv", ["report-pothole", "-c", str(temp_config)]):
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -122,11 +122,11 @@ def test_cli_exits_when_email_not_in_keyring(
 
 
 @patch("pothole_report.config._get_email_from_keyring", return_value="test@example.com")
-def test_cli_unknown_report_name(
+def test_cli_unknown_risk_level(
     _mock_keyring: object, temp_config: Path, temp_photo_dir: Path
 ) -> None:
-    """CLI exits when --report-name does not match a template."""
-    # Create an image with GPS (mocked) - we need extract to succeed to reach the report-name check
+    """CLI exits when --risk-level does not match a risk level."""
+    # Create an image with GPS (mocked) - we need extract to succeed to reach the risk-level check
     from unittest.mock import patch as mock_patch
 
     with mock_patch("pothole_report.cli.extract_all") as mock_extract:
@@ -146,7 +146,7 @@ def test_cli_unknown_report_name(
             )
             with mock_patch.object(
                 sys, "argv",
-                ["report-pothole", "-f", str(temp_photo_dir), "-c", str(temp_config), "--report-name", "nosuch"],
+                ["report-pothole", "-f", str(temp_photo_dir), "-c", str(temp_config), "--risk-level", "nosuch"],
             ):
                 with pytest.raises(SystemExit) as exc_info:
                     main()
@@ -154,18 +154,26 @@ def test_cli_unknown_report_name(
 
 
 @patch("pothole_report.config._get_email_from_keyring", return_value="test@example.com")
-def test_cli_list_reports(_mock_keyring: object, temp_config: Path) -> None:
-    """--list-reports displays available template names."""
+def test_cli_list_risk_levels(_mock_keyring: object, temp_config: Path) -> None:
+    """--list-risk-levels displays available risk levels with description and visual_indicators."""
     from io import StringIO
 
     from rich.console import Console
 
     console = Console(file=StringIO(), force_terminal=False)
-    with patch.object(sys, "argv", ["report-pothole", "--list-reports", "-c", str(temp_config)]):
+    with patch.object(sys, "argv", ["report-pothole", "--list-risk-levels", "-c", str(temp_config)]):
         with patch("pothole_report.cli.Console", return_value=console):
             main()
     out = console.file.getvalue()
-    assert "default" in out
+    # Should include level keys
+    assert "level_1_emergency" in out
+    assert "level_3_medium_hazard" in out
+    # Should include descriptions
+    assert "Description:" in out
+    assert "Visual Indicators:" in out
+    # Should NOT include report_template
+    assert "report_template" not in out
+    assert "Emergency report template" not in out
 
 
 @patch("pothole_report.cli.keyring.set_password")

@@ -24,7 +24,10 @@ class ReportRecord:
     lon: float
     fill_that_hole_url: str
     google_maps_url: str
+    report_template: str
     description: str
+    visual_indicators: str
+    advice_for_reporters_text: str
     email: str
     image_names: list[str]
 
@@ -34,7 +37,10 @@ def build_report_record(
     geocoded: GeocodedResult,
     report_url: str,
     email: str,
+    report_template: str,
     description: str,
+    visual_indicators: str,
+    advice_for_reporters: dict,
     image_names: list[str],
 ) -> ReportRecord:
     """Build a ReportRecord from extracted and geocoded data."""
@@ -43,6 +49,23 @@ def build_report_record(
     lon = round(extracted.lon, 6)
     fth_url = f"{base}/around?lat={lat}&lon={lon}&zoom=4"
     gm_url = f"https://www.google.com/maps?q={lat},{lon}"
+    
+    # Build advice_for_reporters text from description, visual_indicators, and advice_for_reporters
+    advice_lines = []
+    advice_lines.append(f"[bold]Description:[/] {description}")
+    advice_lines.append(f"[bold]Visual Indicators:[/] {visual_indicators}")
+    
+    key_phrases = advice_for_reporters.get("key_phrases", [])
+    if key_phrases:
+        phrases_str = ", ".join(key_phrases)
+        advice_lines.append(f"[bold]Key Phrases:[/] {phrases_str}")
+    
+    pro_tip = advice_for_reporters.get("pro_tip", "")
+    if pro_tip:
+        advice_lines.append(f"[bold]Pro Tip:[/] {pro_tip}")
+    
+    advice_text = "\n".join(advice_lines)
+    
     return ReportRecord(
         path=extracted.path,
         datetime_taken=extracted.datetime_taken,
@@ -52,7 +75,10 @@ def build_report_record(
         lon=extracted.lon,
         fill_that_hole_url=fth_url,
         google_maps_url=gm_url,
+        report_template=report_template,
         description=description,
+        visual_indicators=visual_indicators,
+        advice_for_reporters_text=advice_text,
         email=email,
         image_names=image_names,
     )
@@ -86,9 +112,21 @@ def print_report(record: ReportRecord, console: Console | None = None) -> None:
         f"[bold]Coordinates:[/] {record.lat:.4f}, {record.lon:.4f}\n\n"
         f"[bold]Fill That Hole:[/] {fth_link}\n\n"
         f"[bold]Google Maps:[/] {gm_link}\n\n"
-        f"[bold]Description:[/]\n{record.description}\n\n"
+        f"[bold]Report Template:[/]\n{record.report_template}\n\n"
         f"[bold]Report as:[/] {record.email}\n\n"
     )
+    
+    # Advice for reporters section (above image listing)
+    advice_panel = Panel(
+        Text.from_markup(record.advice_for_reporters_text),
+        title="Advice for Reporters",
+        border_style="yellow",
+    )
+    
     img_table = _image_table(record.image_names)
-    content = Group(Text.from_markup(body_text.strip()), img_table)
+    content = Group(
+        Text.from_markup(body_text.strip()),
+        advice_panel,
+        img_table,
+    )
     c.print(Panel(content, title=f"Report: {record.path.name}", border_style="blue"))
