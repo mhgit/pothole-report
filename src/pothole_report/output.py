@@ -8,8 +8,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from pothole_batcher.extract import ExtractedData
-from pothole_batcher.geocode import GeocodedResult
+from pothole_report.extract import ExtractedData
+from pothole_report.geocode import GeocodedResult
 
 
 @dataclass

@@ -5,7 +5,7 @@ from pathlib import Path
 import keyring
 import yaml
 
-SERVICE_NAME = "pothole-batcher"
+SERVICE_NAME = "pothole-report"
 
 
 def _config_paths(override: Path | None) -> list[Path]:
@@ -15,7 +15,7 @@ def _config_paths(override: Path | None) -> list[Path]:
     cwd = Path.cwd()
     return [
         cwd / "conf" / "pothole-report.yaml",
-        Path.home() / ".config" / "pothole-batcher" / "pothole-report.yaml",
+        Path.home() / ".config" / "pothole-report" / "pothole-report.yaml",
     ]
 
 

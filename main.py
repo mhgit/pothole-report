@@ -1,5 +1,5 @@
 def main():
-    print("Hello from pothole-batcher!")
+    print("Hello from pothole-report!")
 
 
 if __name__ == "__main__":

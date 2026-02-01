@@ -7,7 +7,7 @@ from geopy.location import Location
 
 
 def _get_geolocator() -> Nominatim:
-    return Nominatim(user_agent="pothole-batcher/0.1.0")
+    return Nominatim(user_agent="pothole-report/0.1.0")
 
 
 @dataclass

@@ -9,11 +9,11 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TaskProgressColumn
 from rich.table import Table
 
-from pothole_batcher.config import SERVICE_NAME, load_config
-from pothole_batcher.extract import extract_all
-from pothole_batcher.geocode import reverse_geocode
-from pothole_batcher.output import build_report_record, print_report
-from pothole_batcher.scan import scan_folder
+from pothole_report.config import SERVICE_NAME, load_config
+from pothole_report.extract import extract_all
+from pothole_report.geocode import reverse_geocode
+from pothole_report.output import build_report_record, print_report
+from pothole_report.scan import scan_folder
 
 
 def _run_setup(config_path: Path | None) -> None:
@@ -34,6 +34,22 @@ def _run_setup(config_path: Path | None) -> None:
     console.print("[green]Email stored in keyring.[/]")
 
 
+def _run_remove_keyring(config_path: Path | None) -> None:
+    """Remove the stored email from keyring (for cleanup)."""
+    console = Console()
+    keyring_account = "email"
+    if config_path and config_path.exists():
+        import yaml
+        with config_path.open() as f:
+            data = yaml.safe_load(f) or {}
+        keyring_account = str(data.get("keyring_account", "email"))
+    try:
+        keyring.delete_password(SERVICE_NAME, keyring_account)
+        console.print("[green]Removed keyring entry.[/]")
+    except keyring.errors.PasswordDeleteError:
+        console.print("[dim]No keyring entry found (already removed or never set).[/]")
+
+
 def main() -> None:
     """Run the pothole reporter CLI."""
     if len(sys.argv) > 1 and sys.argv[1] == "setup":
@@ -42,6 +58,14 @@ def main() -> None:
         parser.add_argument("-c", "--config", type=Path, default=None, help="Path to config file")
         args = parser.parse_args()
         _run_setup(args.config)
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1] == "remove-keyring":
+        sys.argv.pop(1)
+        parser = argparse.ArgumentParser(description="Remove stored email from keyring.")
+        parser.add_argument("-c", "--config", type=Path, default=None, help="Path to config file")
+        args = parser.parse_args()
+        _run_remove_keyring(args.config)
         return
 
     parser = argparse.ArgumentParser(

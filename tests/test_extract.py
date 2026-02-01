@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pothole_batcher.extract import (
+from pothole_report.extract import (
     ExtractedData,
     extract,
     extract_all,
@@ -43,7 +43,7 @@ def test_extract_all_returns_none_for_no_gps(tmp_path: Path) -> None:
     assert extract_all(img_path) is None
 
 
-@patch("pothole_batcher.extract.Image")
+@patch("pothole_report.extract.Image")
 def test_extract_returns_none_when_dms_has_fewer_than_3_elements(
     mock_image: MagicMock, tmp_path: Path
 ) -> None:
@@ -70,7 +70,7 @@ def test_extract_returns_none_when_dms_has_fewer_than_3_elements(
     assert extract(img_path) is None
 
 
-@patch("pothole_batcher.extract.Image")
+@patch("pothole_report.extract.Image")
 def test_extract_returns_coords_when_gps_present(mock_image: MagicMock, tmp_path: Path) -> None:
     """Extract returns (lat, lon) when GPS EXIF is present."""
     # GPS: 51°30'0"N, 0°6'0"W -> 51.5, -0.1
@@ -100,7 +100,7 @@ def test_extract_returns_coords_when_gps_present(mock_image: MagicMock, tmp_path
     assert abs(lon - (-0.1)) < 0.001
 
 
-@patch("pothole_batcher.extract.Image")
+@patch("pothole_report.extract.Image")
 def test_extract_datetime_parses_exif_format(mock_image: MagicMock, tmp_path: Path) -> None:
     """Extract datetime parses EXIF DateTimeOriginal format."""
     exif_mock = MagicMock()
@@ -120,7 +120,7 @@ def test_extract_datetime_parses_exif_format(mock_image: MagicMock, tmp_path: Pa
     assert result == "2025-01-15 14:32"
 
 
-@patch("pothole_batcher.extract.Image")
+@patch("pothole_report.extract.Image")
 def test_extract_all_returns_extracted_data(mock_image: MagicMock, tmp_path: Path) -> None:
     """extract_all returns ExtractedData when GPS present."""
     gps_ifd = {

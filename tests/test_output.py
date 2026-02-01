@@ -2,10 +2,10 @@
 
 from pathlib import Path
 
-from pothole_batcher.extract import ExtractedData
-from pothole_batcher.geocode import GeocodedResult
-from pothole_batcher.config import DEFAULT_TEMPLATES
-from pothole_batcher.output import build_report_record, print_report, ReportRecord
+from pothole_report.extract import ExtractedData
+from pothole_report.geocode import GeocodedResult
+from pothole_report.config import DEFAULT_TEMPLATES
+from pothole_report.output import build_report_record, print_report, ReportRecord
 
 
 def test_build_report_record_high_risk() -> None:

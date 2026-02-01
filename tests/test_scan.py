@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from pothole_batcher.scan import scan_folder
+from pothole_report.scan import scan_folder
 
 
 def test_scan_folder_finds_jpg_png(temp_photo_dir: Path) -> None:

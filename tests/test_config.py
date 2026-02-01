@@ -5,10 +5,10 @@ from unittest.mock import patch
 
 import pytest
 
-from pothole_batcher.config import load_config
+from pothole_report.config import load_config
 
 
-@patch("pothole_batcher.config._get_email_from_keyring")
+@patch("pothole_report.config._get_email_from_keyring")
 def test_load_config_valid(mock_keyring: object, temp_config: Path) -> None:
     """Load valid config returns report_url, email, and templates."""
     mock_keyring.return_value = "test@example.com"
@@ -19,7 +19,7 @@ def test_load_config_valid(mock_keyring: object, temp_config: Path) -> None:
     assert "default" in config["templates"]
 
 
-@patch("pothole_batcher.config._get_email_from_keyring")
+@patch("pothole_report.config._get_email_from_keyring")
 def test_load_config_raises_when_email_missing(mock_keyring: object, temp_config: Path) -> None:
     """Load config raises ValueError when keyring has no email."""
     mock_keyring.return_value = None
@@ -36,7 +36,7 @@ def test_load_config_missing_file() -> None:
     assert "pothole-report.yaml" in str(exc_info.value)
 
 
-@patch("pothole_batcher.config._get_email_from_keyring")
+@patch("pothole_report.config._get_email_from_keyring")
 def test_load_config_empty_file(mock_keyring: object, tmp_path: Path) -> None:
     """Empty config returns defaults and email from keyring."""
     mock_keyring.return_value = "from@keyring.com"
@@ -48,7 +48,7 @@ def test_load_config_empty_file(mock_keyring: object, tmp_path: Path) -> None:
     assert "default" in config["templates"]
 
 
-@patch("pothole_batcher.config._get_email_from_keyring")
+@patch("pothole_report.config._get_email_from_keyring")
 def test_load_config_partial(mock_keyring: object, tmp_path: Path) -> None:
     """Partial config uses defaults for missing keys."""
     mock_keyring.return_value = "custom@test.com"
@@ -60,7 +60,7 @@ def test_load_config_partial(mock_keyring: object, tmp_path: Path) -> None:
     assert "templates" in config
 
 
-@patch("pothole_batcher.config._get_email_from_keyring")
+@patch("pothole_report.config._get_email_from_keyring")
 def test_load_config_templates_non_dict_uses_defaults(mock_keyring: object, tmp_path: Path) -> None:
     """When templates is a non-dict (string, list, etc.), fall back to default templates."""
     mock_keyring.return_value = "u@example.com"
@@ -73,7 +73,7 @@ def test_load_config_templates_non_dict_uses_defaults(mock_keyring: object, tmp_
     assert "default" in config["templates"]
 
 
-@patch("pothole_batcher.config._get_email_from_keyring")
+@patch("pothole_report.config._get_email_from_keyring")
 def test_load_config_templates_from_yaml(mock_keyring: object, tmp_path: Path) -> None:
     """Custom templates in YAML override defaults."""
     mock_keyring.return_value = "u@example.com"

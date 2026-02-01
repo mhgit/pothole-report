@@ -4,10 +4,10 @@ from unittest.mock import MagicMock, patch
 
 from geopy.location import Location
 
-from pothole_batcher.geocode import GeocodedResult, reverse_geocode
+from pothole_report.geocode import GeocodedResult, reverse_geocode
 
 
-@patch("pothole_batcher.geocode._get_geolocator")
+@patch("pothole_report.geocode._get_geolocator")
 def test_reverse_geocode_returns_result_when_postcode_present(
     mock_get_geolocator: MagicMock,
 ) -> None:
@@ -29,7 +29,7 @@ def test_reverse_geocode_returns_result_when_postcode_present(
     assert result.address == "High Street, Guildford GU1 4RB, UK"
 
 
-@patch("pothole_batcher.geocode._get_geolocator")
+@patch("pothole_report.geocode._get_geolocator")
 def test_reverse_geocode_returns_none_when_no_postcode(
     mock_get_geolocator: MagicMock,
 ) -> None:
@@ -46,7 +46,7 @@ def test_reverse_geocode_returns_none_when_no_postcode(
     assert result is None
 
 
-@patch("pothole_batcher.geocode._get_geolocator")
+@patch("pothole_report.geocode._get_geolocator")
 def test_reverse_geocode_returns_none_when_location_none(
     mock_get_geolocator: MagicMock,
 ) -> None:
@@ -59,7 +59,7 @@ def test_reverse_geocode_returns_none_when_location_none(
     assert result is None
 
 
-@patch("pothole_batcher.geocode._get_geolocator")
+@patch("pothole_report.geocode._get_geolocator")
 def test_reverse_geocode_returns_none_when_postcode_not_string(
     mock_get_geolocator: MagicMock,
 ) -> None:
@@ -76,7 +76,7 @@ def test_reverse_geocode_returns_none_when_postcode_not_string(
     assert result is None
 
 
-@patch("pothole_batcher.geocode._get_geolocator")
+@patch("pothole_report.geocode._get_geolocator")
 def test_reverse_geocode_returns_none_on_exception(
     mock_get_geolocator: MagicMock,
 ) -> None:

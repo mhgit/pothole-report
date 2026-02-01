@@ -1,4 +1,4 @@
-# pothole-batcher
+# Pothole Report
 
 A CLI tool that batch-processes pothole photos, extracts GPS metadata, reverse-geocodes to UK postcodes, and outputs a report bundle ready for manual submission via [Fill That Hole](https://www.fillthathole.org.uk/) (Cycling UK). One site covers all UK councils.
 
@@ -37,7 +37,7 @@ templates:
   # Add your own; use with -r <key> or --report-name=<key>
 ```
 
-Or place it at `~/.config/pothole-batcher/pothole-report.yaml`. Edit `templates` to add or change report description text.
+Or place it at `~/.config/pothole-report/pothole-report.yaml`. Edit `templates` to add or change report description text.
 
 ### Store your email (first run)
 
@@ -49,6 +49,12 @@ uv run report-pothole setup
 
 You’ll be prompted for your email. It is stored securely and not written to disk.
 
+To remove the stored email (e.g. for cleanup):
+
+```bash
+uv run report-pothole remove-keyring
+```
+
 ### Usage
 
 ```bash
@@ -56,7 +62,8 @@ uv run report-pothole -f /path/to/photos
 uv run report-pothole -f ./photos -r hidden              # use 'hidden' template
 uv run report-pothole -l                                 # list available templates
 uv run report-pothole -f ./photos -c conf/pothole-report.yaml
-uv run report-pothole setup -c conf/pothole-report.yaml # store email (first run)
+uv run report-pothole setup -c conf/pothole-report.yaml   # store email (first run)
+uv run report-pothole remove-keyring -c conf/pothole-report.yaml  # remove stored email
 ```
 
 | Option | Description |
@@ -83,7 +90,7 @@ Images with slightly different GPS (natural GPS drift) are normal. The earliest 
 
 ```bash
 uv run pytest
-uv run pytest --cov=pothole_batcher --cov-report=term-missing
+uv run pytest --cov=pothole_report --cov-report=term-missing
 uv run ruff check src/
 ```
 
