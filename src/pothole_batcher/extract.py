@@ -55,6 +55,8 @@ def extract(path: Path) -> tuple[float, float] | None:
         lon_ref = gps.get(3)   # GPSLongitudeRef
         if not all([lat_data, lat_ref, lon_data, lon_ref]):
             return None
+        if len(lat_data) != 3 or len(lon_data) != 3:
+            return None
         lat = _dms_to_decimal(
             (_to_float(lat_data[0]), _to_float(lat_data[1]), _to_float(lat_data[2])),
             str(lat_ref),

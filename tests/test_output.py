@@ -17,7 +17,7 @@ def test_build_report_record_high_risk() -> None:
         datetime_taken="2025-01-15 14:32",
     )
     geocoded = GeocodedResult(postcode="GU1 4RB", address="High Street, Guildford")
-    desc = DEFAULT_TEMPLATES["high-risk"]
+    desc = DEFAULT_TEMPLATES["default"]
     record = build_report_record(
         extracted,
         geocoded,
@@ -45,7 +45,7 @@ def test_build_report_record_hidden_template() -> None:
         datetime_taken=None,
     )
     geocoded = GeocodedResult(postcode="SW1A 1AA", address="Downing St")
-    desc = DEFAULT_TEMPLATES["hidden"]
+    desc = DEFAULT_TEMPLATES["default"]
     record = build_report_record(
         extracted,
         geocoded,

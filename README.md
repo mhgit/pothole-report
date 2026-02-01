@@ -25,7 +25,7 @@ uv sync
 
 ### Config
 
-Create `conf/pothole-batcher.yaml` (or copy from `conf/pothole-batcher.example.yaml`):
+Create `conf/pothole-report.yaml` (or copy from `conf/pothole-report.example.yaml`):
 
 ```yaml
 report_url: "https://www.fillthathole.org.uk"
@@ -37,7 +37,7 @@ templates:
   # Add your own; use with -r <key> or --report-name=<key>
 ```
 
-Or place it at `~/.config/pothole-batcher/pothole-batcher.yaml`. Edit `templates` to add or change report description text.
+Or place it at `~/.config/pothole-batcher/pothole-report.yaml`. Edit `templates` to add or change report description text.
 
 ### Store your email (first run)
 
@@ -55,15 +55,15 @@ You’ll be prompted for your email. It is stored securely and not written to di
 uv run report-pothole -f /path/to/photos
 uv run report-pothole -f ./photos -r hidden              # use 'hidden' template
 uv run report-pothole -l                                 # list available templates
-uv run report-pothole -f ./photos -c conf/pothole-batcher.yaml
-uv run report-pothole setup -c conf/pothole-batcher.yaml # store email (first run)
+uv run report-pothole -f ./photos -c conf/pothole-report.yaml
+uv run report-pothole setup -c conf/pothole-report.yaml # store email (first run)
 ```
 
 | Option | Description |
 |--------|-------------|
 | `-f`, `--folder` | Folder containing JPG/PNG photos (required unless `-l`) |
 | `-l`, `--list-reports` | List available report template names from config |
-| `-r`, `--report-name` | Template key for report description (default: high-risk) |
+| `-r`, `--report-name` | Template key for report description (default: default) |
 | `-c`, `--config` | Path to config file (optional override) |
 | `-v`, `--verbose` | Show which files were skipped (no GPS / geocode failed) |
 

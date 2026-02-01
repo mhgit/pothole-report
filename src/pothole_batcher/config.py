@@ -14,8 +14,8 @@ def _config_paths(override: Path | None) -> list[Path]:
         return [override]
     cwd = Path.cwd()
     return [
-        cwd / "conf" / "pothole-batcher.yaml",
-        Path.home() / ".config" / "pothole-batcher" / "pothole-batcher.yaml",
+        cwd / "conf" / "pothole-report.yaml",
+        Path.home() / ".config" / "pothole-batcher" / "pothole-report.yaml",
     ]
 
 
@@ -26,17 +26,8 @@ def _get_email_from_keyring(account: str) -> str | None:
 
 
 DEFAULT_TEMPLATES = {
-    "high-risk": (
-        "This defect is located in the primary line of travel for cyclists. "
-        "Due to its depth, it presents a significant risk of ejection. "
-        "It is currently forcing cyclists to swerve into the path of motor traffic to avoid it. "
-        "Please treat as an urgent safety hazard."
-    ),
-    "hidden": (
-        "This pothole is often obscured by shadows or standing water, "
-        "making it invisible to cyclists until impact. "
-        "As it sits directly where a rider is expected to be, "
-        "it represents a high risk of a serious incident."
+    "default": (
+        "Default report, use conf/pothole-report.yaml, to provide better reports."
     ),
 }
 
@@ -57,7 +48,9 @@ def load_config(config_path: Path | None = None) -> dict:
                     f"Or store manually:\n"
                     f'  keyring set {SERVICE_NAME} {keyring_account} "your@email.com"'
                 )
-            raw_templates = data.get("templates") or {}
+            raw_templates = data.get("templates")
+            if not isinstance(raw_templates, dict):
+                raw_templates = {}
             templates = {
                 str(k): str(v)
                 for k, v in raw_templates.items()
@@ -72,5 +65,6 @@ def load_config(config_path: Path | None = None) -> dict:
         f"Config not found. Create one of:\n{path_list}\n"
         f"With content:\n"
         '  report_url: "https://www.fillthathole.org.uk"\n'
-        '  keyring_account: "email"  # optional, default "email"'
+        '  keyring_account: "email"  # optional, default "email"\n'
+        '  templates:\n    default: "description text"'
     )

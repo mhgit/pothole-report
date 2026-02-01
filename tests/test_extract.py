@@ -44,6 +44,33 @@ def test_extract_all_returns_none_for_no_gps(tmp_path: Path) -> None:
 
 
 @patch("pothole_batcher.extract.Image")
+def test_extract_returns_none_when_dms_has_fewer_than_3_elements(
+    mock_image: MagicMock, tmp_path: Path
+) -> None:
+    """Extract returns None when GPS DMS arrays have fewer than 3 elements (avoids IndexError)."""
+    gps_ifd = {
+        1: "N",
+        2: ((51, 1), (30, 1)),  # only 2 elements - malformed
+        3: "W",
+        4: ((0, 1), (6, 1), (0, 1)),
+    }
+    exif_mock = MagicMock()
+    exif_mock.get_ifd.return_value = gps_ifd
+
+    img_mock = MagicMock()
+    img_mock.getexif.return_value = exif_mock
+
+    cm = MagicMock()
+    cm.__enter__.return_value = img_mock
+    cm.__exit__.return_value = False
+    mock_image.open.return_value = cm
+
+    img_path = tmp_path / "malformed.jpg"
+    img_path.touch()
+    assert extract(img_path) is None
+
+
+@patch("pothole_batcher.extract.Image")
 def test_extract_returns_coords_when_gps_present(mock_image: MagicMock, tmp_path: Path) -> None:
     """Extract returns (lat, lon) when GPS EXIF is present."""
     # GPS: 51°30'0"N, 0°6'0"W -> 51.5, -0.1

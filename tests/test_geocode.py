@@ -60,6 +60,23 @@ def test_reverse_geocode_returns_none_when_location_none(
 
 
 @patch("pothole_batcher.geocode._get_geolocator")
+def test_reverse_geocode_returns_none_when_postcode_not_string(
+    mock_get_geolocator: MagicMock,
+) -> None:
+    """Reverse geocode returns None when postcode is None or non-string (avoids AttributeError)."""
+    location = MagicMock(spec=Location)
+    location.raw = {"address": {"postcode": None}}
+    location.address = "Somewhere"
+
+    geolocator = MagicMock()
+    geolocator.reverse.return_value = location
+    mock_get_geolocator.return_value = geolocator
+
+    result = reverse_geocode(51.5, -0.1)
+    assert result is None
+
+
+@patch("pothole_batcher.geocode._get_geolocator")
 def test_reverse_geocode_returns_none_on_exception(
     mock_get_geolocator: MagicMock,
 ) -> None:

@@ -1,7 +1,8 @@
 report_url: "https://www.fillthathole.org.uk"
 # Email is stored in keyring. Run: report-pothole setup
 
-# Report templates: add your own and use with --report-name <key>
+# Report templates: add your own and use with -r <key> or --report-name=<key>
 templates:
+  default: "Default report, use conf/pothole-report.yaml, to provide better reports."
   high-risk: "This defect is located in the primary line of travel for cyclists. Due to its depth, it presents a significant risk of ejection. It is currently forcing cyclists to swerve into the path of motor traffic to avoid it. Please treat as an urgent safety hazard."
   hidden: "This pothole is often obscured by shadows or standing water, making it invisible to cyclists until impact. As it sits directly where a rider is expected to be, it represents a high risk of a serious incident."

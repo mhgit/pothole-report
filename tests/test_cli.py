@@ -62,6 +62,28 @@ def test_cli_empty_folder(_mock_keyring: object, tmp_path: Path, temp_config: Pa
 
 
 @patch("pothole_batcher.config._get_email_from_keyring", return_value="test@example.com")
+def test_cli_skips_unreadable_images(
+    _mock_keyring: object,
+    tmp_path: Path,
+    temp_config: Path,
+) -> None:
+    """CLI skips corrupted/unreadable images without crashing."""
+    bad_img = tmp_path / "corrupt.jpg"
+    bad_img.write_text("not an image")
+    mock_console = MagicMock()
+    with patch.object(sys, "argv", [
+        "report-pothole",
+        "-f", str(tmp_path),
+        "-c", str(temp_config),
+        "-v",
+    ]):
+        with patch("pothole_batcher.cli.Console", return_value=mock_console):
+            main()
+    out = " ".join(str(c) for c in mock_console.print.call_args_list)
+    assert "unreadable" in out or "Skipped" in out
+
+
+@patch("pothole_batcher.config._get_email_from_keyring", return_value="test@example.com")
 def test_cli_processes_photos(
     _mock_keyring: object,
     tmp_path: Path,
@@ -143,7 +165,7 @@ def test_cli_list_reports(_mock_keyring: object, temp_config: Path) -> None:
         with patch("pothole_batcher.cli.Console", return_value=console):
             main()
     out = console.file.getvalue()
-    assert "high-risk" in out
+    assert "default" in out
 
 
 @patch("pothole_batcher.cli.keyring.set_password")

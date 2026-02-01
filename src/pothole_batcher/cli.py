@@ -62,8 +62,8 @@ def main() -> None:
     parser.add_argument(
         "-r",
         "--report-name",
-        default="high-risk",
-        help="Template key to use for report description (default: high-risk)",
+        default="default",
+        help="Template key to use for report description (default: default)",
     )
     parser.add_argument(
         "-c",
@@ -129,6 +129,7 @@ def main() -> None:
     # Extract from all images; use earliest-dated one for GPS
     extracted_list: list = []
     skipped_no_gps = 0
+    skipped_unreadable = 0
 
     with Progress(
         SpinnerColumn(),
@@ -137,7 +138,14 @@ def main() -> None:
     ) as progress:
         task = progress.add_task("Processing...", total=len(paths))
         for path in paths:
-            extracted = extract_all(path)
+            try:
+                extracted = extract_all(path)
+            except Exception:
+                skipped_unreadable += 1
+                if args.verbose:
+                    console.print(f"[dim]Skipped (unreadable): {path.name}[/]")
+                progress.advance(task)
+                continue
             if extracted is None:
                 skipped_no_gps += 1
                 if args.verbose:
@@ -146,6 +154,8 @@ def main() -> None:
                 extracted_list.append(extracted)
             progress.advance(task)
 
+    if skipped_unreadable:
+        console.print(f"[yellow]Skipped {skipped_unreadable} unreadable image(s).[/]")
     if skipped_no_gps:
         console.print(f"[yellow]Skipped {skipped_no_gps} image(s) with no GPS data.[/]")
 

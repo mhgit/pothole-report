@@ -16,7 +16,7 @@ def test_load_config_valid(mock_keyring: object, temp_config: Path) -> None:
     assert config["report_url"] == "https://example.fillthathole.org"
     assert config["email"] == "test@example.com"
     assert "templates" in config
-    assert "high-risk" in config["templates"]
+    assert "default" in config["templates"]
 
 
 @patch("pothole_batcher.config._get_email_from_keyring")
@@ -31,9 +31,9 @@ def test_load_config_raises_when_email_missing(mock_keyring: object, temp_config
 def test_load_config_missing_file() -> None:
     """Missing config raises FileNotFoundError with helpful message."""
     with pytest.raises(FileNotFoundError) as exc_info:
-        load_config(Path("/nonexistent/pothole-batcher.yaml"))
+        load_config(Path("/nonexistent/pothole-report.yaml"))
     assert "Config not found" in str(exc_info.value)
-    assert "pothole-batcher.yaml" in str(exc_info.value)
+    assert "pothole-report.yaml" in str(exc_info.value)
 
 
 @patch("pothole_batcher.config._get_email_from_keyring")
@@ -45,7 +45,7 @@ def test_load_config_empty_file(mock_keyring: object, tmp_path: Path) -> None:
     config = load_config(config_path)
     assert config["report_url"] == "https://www.fillthathole.org.uk"
     assert config["email"] == "from@keyring.com"
-    assert "high-risk" in config["templates"]
+    assert "default" in config["templates"]
 
 
 @patch("pothole_batcher.config._get_email_from_keyring")
@@ -58,6 +58,19 @@ def test_load_config_partial(mock_keyring: object, tmp_path: Path) -> None:
     assert config["report_url"] == "https://www.fillthathole.org.uk"
     assert config["email"] == "custom@test.com"
     assert "templates" in config
+
+
+@patch("pothole_batcher.config._get_email_from_keyring")
+def test_load_config_templates_non_dict_uses_defaults(mock_keyring: object, tmp_path: Path) -> None:
+    """When templates is a non-dict (string, list, etc.), fall back to default templates."""
+    mock_keyring.return_value = "u@example.com"
+    config_path = tmp_path / "bad_templates.yaml"
+    config_path.write_text(
+        'report_url: "https://x.org"\ntemplates: "not a dict"\n',
+        encoding="utf-8",
+    )
+    config = load_config(config_path)
+    assert "default" in config["templates"]
 
 
 @patch("pothole_batcher.config._get_email_from_keyring")

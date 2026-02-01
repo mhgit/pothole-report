@@ -8,7 +8,7 @@ import pytest
 @pytest.fixture
 def temp_config(tmp_path: Path) -> Path:
     """Create a temporary config file (no email - from keyring) and return its path."""
-    config_path = tmp_path / "pothole-batcher.yaml"
+    config_path = tmp_path / "pothole-report.yaml"
     config_path.write_text(
         'report_url: "https://example.fillthathole.org"\n',
         encoding="utf-8",
