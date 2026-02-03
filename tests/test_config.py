@@ -10,14 +10,16 @@ from pothole_report.config import _config_paths, _find_project_root, load_config
 
 @patch("pothole_report.config._get_email_from_keyring")
 def test_load_config_valid(mock_keyring: object, temp_config: Path) -> None:
-    """Load valid config returns report_url, email, risk_levels, and advice_for_reporters."""
+    """Load valid config returns report_url, email, attributes, report_template, and advice_for_reporters."""
     mock_keyring.return_value = "test@example.com"
     config = load_config(temp_config)
     assert config["report_url"] == "https://example.fillthathole.org"
     assert config["email"] == "test@example.com"
-    assert "risk_levels" in config
-    assert "level_1_emergency" in config["risk_levels"]
-    assert "level_3_medium_hazard" in config["risk_levels"]
+    assert "attributes" in config
+    assert "depth" in config["attributes"]
+    assert "lt40mm" in config["attributes"]["depth"]
+    assert "report_template" in config
+    assert "attribute_phrases" in config
     assert "advice_for_reporters" in config
     assert "key_phrases" in config["advice_for_reporters"]
     assert "pro_tip" in config["advice_for_reporters"]
@@ -41,23 +43,23 @@ def test_load_config_missing_file() -> None:
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_missing_risk_levels(mock_keyring: object, tmp_path: Path) -> None:
-    """Config without risk_levels raises ValueError."""
+def test_load_config_missing_attributes(mock_keyring: object, tmp_path: Path) -> None:
+    """Config without attributes raises ValueError."""
     mock_keyring.return_value = "test@example.com"
-    config_path = tmp_path / "no_risk_levels.yaml"
+    config_path = tmp_path / "no_attributes.yaml"
     config_path.write_text('report_url: "https://x.org"\n', encoding="utf-8")
     with pytest.raises(ValueError) as exc_info:
         load_config(config_path)
-    assert "risk_levels" in str(exc_info.value).lower()
+    assert "attributes" in str(exc_info.value).lower()
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_risk_levels_not_dict(mock_keyring: object, tmp_path: Path) -> None:
-    """Config with risk_levels as non-dict raises ValueError."""
+def test_load_config_attributes_not_dict(mock_keyring: object, tmp_path: Path) -> None:
+    """Config with attributes as non-dict raises ValueError."""
     mock_keyring.return_value = "test@example.com"
-    config_path = tmp_path / "bad_risk_levels.yaml"
+    config_path = tmp_path / "bad_attributes.yaml"
     config_path.write_text(
-        'report_url: "https://x.org"\nrisk_levels: "not a dict"\n',
+        'report_url: "https://x.org"\nattributes: "not a dict"\n',
         encoding="utf-8",
     )
     with pytest.raises(ValueError) as exc_info:
@@ -66,72 +68,53 @@ def test_load_config_risk_levels_not_dict(mock_keyring: object, tmp_path: Path) 
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_missing_required_level(mock_keyring: object, tmp_path: Path) -> None:
-    """Config missing a required risk level raises ValueError."""
+def test_load_config_missing_report_template(mock_keyring: object, tmp_path: Path) -> None:
+    """Config without report_template raises ValueError."""
     mock_keyring.return_value = "test@example.com"
-    config_path = tmp_path / "missing_level.yaml"
+    config_path = tmp_path / "no_template.yaml"
     config_content = '''report_url: "https://x.org"
-risk_levels:
-  level_1_emergency:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_2_high_priority:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_3_medium_hazard:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_4_developing_risk:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
+attributes:
+  depth:
+    lt40mm: "Less than 40mm"
 '''
     config_path.write_text(config_content, encoding="utf-8")
     with pytest.raises(ValueError) as exc_info:
         load_config(config_path)
-    assert "Missing required risk levels" in str(exc_info.value)
-    assert "level_5_monitoring_nuisance" in str(exc_info.value)
+    assert "report_template" in str(exc_info.value).lower()
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_extra_levels_allowed(mock_keyring: object, tmp_path: Path) -> None:
-    """Config with extra risk levels beyond required ones is valid."""
+def test_load_config_report_template_not_string(mock_keyring: object, tmp_path: Path) -> None:
+    """Config with report_template as non-string raises ValueError."""
     mock_keyring.return_value = "test@example.com"
-    config_path = tmp_path / "extra_levels.yaml"
+    config_path = tmp_path / "bad_template.yaml"
     config_content = '''report_url: "https://x.org"
-risk_levels:
-  level_1_emergency:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_2_high_priority:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_3_medium_hazard:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_4_developing_risk:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_5_monitoring_nuisance:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_6_custom:
-    description: "Custom level"
-    visual_indicators: "Custom indicators"
-    report_template: "Custom template"
+attributes:
+  depth:
+    lt40mm: "Less than 40mm"
+report_template: 123
+'''
+    config_path.write_text(config_content, encoding="utf-8")
+    with pytest.raises(ValueError) as exc_info:
+        load_config(config_path)
+    assert "must be a string" in str(exc_info.value)
+
+
+@patch("pothole_report.config._get_email_from_keyring")
+def test_load_config_attribute_phrases_optional(mock_keyring: object, tmp_path: Path) -> None:
+    """Config without attribute_phrases still loads successfully (defaults to empty dict)."""
+    mock_keyring.return_value = "test@example.com"
+    config_path = tmp_path / "no_phrases.yaml"
+    config_content = '''report_url: "https://x.org"
+attributes:
+  depth:
+    lt40mm: "Less than 40mm"
+report_template: "{severity}: {description}"
 '''
     config_path.write_text(config_content, encoding="utf-8")
     config = load_config(config_path)
-    assert "level_6_custom" in config["risk_levels"]
-    assert config["risk_levels"]["level_6_custom"]["description"] == "Custom level"
+    assert "attribute_phrases" in config
+    assert config["attribute_phrases"] == {}
 
 
 @patch("pothole_report.config._get_email_from_keyring")
@@ -140,33 +123,32 @@ def test_load_config_advice_for_reporters_optional(mock_keyring: object, tmp_pat
     mock_keyring.return_value = "test@example.com"
     config_path = tmp_path / "no_advice.yaml"
     config_content = '''report_url: "https://x.org"
-risk_levels:
-  level_1_emergency:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_2_high_priority:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_3_medium_hazard:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_4_developing_risk:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
-  level_5_monitoring_nuisance:
-    description: "Test"
-    visual_indicators: "Test"
-    report_template: "Test"
+attributes:
+  depth:
+    lt40mm: "Less than 40mm"
+report_template: "{severity}: {description}"
 '''
     config_path.write_text(config_content, encoding="utf-8")
     config = load_config(config_path)
     assert "advice_for_reporters" in config
     assert config["advice_for_reporters"]["key_phrases"] == []
     assert config["advice_for_reporters"]["pro_tip"] == ""
+
+
+@patch("pothole_report.config._get_email_from_keyring")
+def test_load_config_attribute_value_not_dict(mock_keyring: object, tmp_path: Path) -> None:
+    """Config with attribute value as non-dict raises ValueError."""
+    mock_keyring.return_value = "test@example.com"
+    config_path = tmp_path / "bad_attribute_value.yaml"
+    config_content = '''report_url: "https://x.org"
+attributes:
+  depth: "not a dict"
+report_template: "{severity}: {description}"
+'''
+    config_path.write_text(config_content, encoding="utf-8")
+    with pytest.raises(ValueError) as exc_info:
+        load_config(config_path)
+    assert "must be a dictionary" in str(exc_info.value)
 
 
 def test_find_project_root_finds_pyproject_toml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

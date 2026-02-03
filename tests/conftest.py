@@ -10,27 +10,29 @@ def temp_config(tmp_path: Path) -> Path:
     """Create a temporary config file (no email - from keyring) and return its path."""
     config_path = tmp_path / "pothole-report.yaml"
     config_content = '''report_url: "https://example.fillthathole.org"
-risk_levels:
-  level_1_emergency:
-    description: "Emergency level description"
-    visual_indicators: "Emergency visual indicators"
-    report_template: "Emergency report template"
-  level_2_high_priority:
-    description: "High priority description"
-    visual_indicators: "High priority visual indicators"
-    report_template: "High priority report template"
-  level_3_medium_hazard:
-    description: "Medium hazard description"
-    visual_indicators: "Medium hazard visual indicators"
-    report_template: "Medium hazard report template"
-  level_4_developing_risk:
-    description: "Developing risk description"
-    visual_indicators: "Developing risk visual indicators"
-    report_template: "Developing risk report template"
-  level_5_monitoring_nuisance:
-    description: "Monitoring nuisance description"
-    visual_indicators: "Monitoring nuisance visual indicators"
-    report_template: "Monitoring nuisance report template"
+attributes:
+  depth:
+    lt40mm: "Less than 40mm (sub-intervention)"
+    gte40mm: "40mm or greater (meets intervention level)"
+    gt50mm: "Greater than 50mm (emergency intervention)"
+  edge:
+    sharp: "Sharp, vertical shear edges"
+    rounded: "Rounded edges"
+  location:
+    primary_cycle_line: "Primary cycle line / where cyclist expected"
+    general: "General route"
+report_template: "{severity}: {depth_description} defect located {location_description}."
+attribute_phrases:
+  severity:
+    gt50mm_sharp_primary_cycle_line: "EMERGENCY"
+    gte40mm_primary_cycle_line: "HIGH RISK"
+  depth_description:
+    lt40mm: "less than 40mm deep"
+    gte40mm: "40mm or greater"
+    gt50mm: "exceeds 50mm"
+  location_description:
+    primary_cycle_line: "in the primary line of travel"
+    general: "on a general route"
 advice_for_reporters:
   key_phrases:
     - "Test phrase 1"

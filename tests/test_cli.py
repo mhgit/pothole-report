@@ -11,7 +11,7 @@ from pothole_report.cli import main
 
 @patch("pothole_report.config._get_email_from_keyring", return_value="test@example.com")
 def test_cli_requires_folder(_mock_keyring: object, temp_config: Path) -> None:
-    """CLI exits with error when -f/--folder is missing (and not --list-risk-levels)."""
+    """CLI exits with error when -f/--folder is missing."""
     with patch.object(sys, "argv", ["report-pothole", "-c", str(temp_config)]):
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -53,6 +53,7 @@ def test_cli_empty_folder(_mock_keyring: object, tmp_path: Path, temp_config: Pa
         "report-pothole",
         "-f", str(tmp_path),
         "-c", str(temp_config),
+        "--depth", "lt40mm",
     ]):
         with patch("pothole_report.cli.Console", return_value=mock_console):
             main()
@@ -75,6 +76,7 @@ def test_cli_skips_unreadable_images(
         "report-pothole",
         "-f", str(tmp_path),
         "-c", str(temp_config),
+        "--depth", "lt40mm",
         "-v",
     ]):
         with patch("pothole_report.cli.Console", return_value=mock_console):
@@ -96,6 +98,7 @@ def test_cli_processes_photos(
         "report-pothole",
         "-f", str(temp_photo_dir),
         "-c", str(temp_config),
+        "--depth", "lt40mm",
     ]):
         with patch("pothole_report.cli.Console", return_value=mock_console):
             main()
@@ -122,58 +125,73 @@ def test_cli_exits_when_email_not_in_keyring(
 
 
 @patch("pothole_report.config._get_email_from_keyring", return_value="test@example.com")
-def test_cli_unknown_risk_level(
+def test_cli_invalid_attribute_value(
     _mock_keyring: object, temp_config: Path, temp_photo_dir: Path
 ) -> None:
-    """CLI exits when --risk-level does not match a risk level."""
-    # Create an image with GPS (mocked) - we need extract to succeed to reach the risk-level check
-    from unittest.mock import patch as mock_patch
-
-    with mock_patch("pothole_report.cli.extract_all") as mock_extract:
-        from pothole_report.extract import ExtractedData
-
-        mock_extract.return_value = ExtractedData(
-            path=temp_photo_dir / "photo.jpg",
-            lat=51.5,
-            lon=-0.1,
-            datetime_taken="2025-01-01 12:00",
-        )
-        with mock_patch("pothole_report.cli.reverse_geocode") as mock_geocode:
-            from pothole_report.geocode import GeocodedResult
-
-            mock_geocode.return_value = GeocodedResult(
-                postcode="XX1 1XX", address="Test St"
-            )
-            with mock_patch.object(
-                sys, "argv",
-                ["report-pothole", "-f", str(temp_photo_dir), "-c", str(temp_config), "--risk-level", "nosuch"],
-            ):
-                with pytest.raises(SystemExit) as exc_info:
-                    main()
-            assert exc_info.value.code == 1
+    """CLI exits when attribute value does not match config."""
+    with patch.object(
+        sys, "argv",
+        ["report-pothole", "-f", str(temp_photo_dir), "-c", str(temp_config), "--depth", "invalid"],
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+    assert exc_info.value.code == 1
 
 
 @patch("pothole_report.config._get_email_from_keyring", return_value="test@example.com")
-def test_cli_list_risk_levels(_mock_keyring: object, temp_config: Path) -> None:
-    """--list-risk-levels displays available risk levels with description and visual_indicators."""
-    from io import StringIO
-
-    from rich.console import Console
-
-    console = Console(file=StringIO(), force_terminal=False)
-    with patch.object(sys, "argv", ["report-pothole", "--list-risk-levels", "-c", str(temp_config)]):
-        with patch("pothole_report.cli.Console", return_value=console):
+def test_cli_no_attributes_provided(_mock_keyring: object, temp_config: Path, temp_photo_dir: Path) -> None:
+    """CLI exits when no attributes are provided (neither flags nor interactive)."""
+    with patch.object(
+        sys, "argv",
+        ["report-pothole", "-f", str(temp_photo_dir), "-c", str(temp_config)],
+    ):
+        with pytest.raises(SystemExit) as exc_info:
             main()
-    out = console.file.getvalue()
-    # Should include level keys
-    assert "level_1_emergency" in out
-    assert "level_3_medium_hazard" in out
-    # Should include descriptions
-    assert "Description:" in out
-    assert "Visual Indicators:" in out
-    # Should NOT include report_template
-    assert "report_template" not in out
-    assert "Emergency report template" not in out
+    assert exc_info.value.code == 1
+
+
+@patch("pothole_report.config._get_email_from_keyring", return_value="test@example.com")
+def test_cli_multi_select_location(_mock_keyring: object, temp_config: Path, temp_photo_dir: Path) -> None:
+    """CLI accepts comma-separated values for location (multi-select)."""
+    mock_console = MagicMock()
+    with patch.object(sys, "argv", [
+        "report-pothole",
+        "-f", str(temp_photo_dir),
+        "-c", str(temp_config),
+        "--location", "primary_cycle_line,general",
+        "--depth", "lt40mm",
+    ]):
+        with patch("pothole_report.cli.Console", return_value=mock_console):
+            # Should not raise an error
+            try:
+                main()
+            except SystemExit:
+                pass  # Expected if no GPS/images, but validation should pass
+    # Check that validation passed (no error about invalid location values)
+    calls = [str(c) for c in mock_console.print.call_args_list]
+    assert not any("Invalid value" in str(c) and "location" in str(c).lower() for c in calls)
+
+
+@patch("pothole_report.config._get_email_from_keyring", return_value="test@example.com")
+def test_cli_multi_select_visibility(_mock_keyring: object, temp_config: Path, temp_photo_dir: Path) -> None:
+    """CLI accepts comma-separated values for visibility (multi-select)."""
+    mock_console = MagicMock()
+    with patch.object(sys, "argv", [
+        "report-pothole",
+        "-f", str(temp_photo_dir),
+        "-c", str(temp_config),
+        "--visibility", "obscured_water,obscured_shadows",
+        "--depth", "lt40mm",
+    ]):
+        with patch("pothole_report.cli.Console", return_value=mock_console):
+            # Should not raise an error
+            try:
+                main()
+            except SystemExit:
+                pass  # Expected if no GPS/images, but validation should pass
+    # Check that validation passed (no error about invalid visibility values)
+    calls = [str(c) for c in mock_console.print.call_args_list]
+    assert not any("Invalid value" in str(c) and "visibility" in str(c).lower() for c in calls)
 
 
 @patch("pothole_report.cli.keyring.set_password")

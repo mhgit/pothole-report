@@ -7,15 +7,6 @@ import yaml
 
 SERVICE_NAME = "pothole-report"
 
-# Required minimum risk levels that must be present in config
-REQUIRED_RISK_LEVELS = {
-    "level_1_emergency",
-    "level_2_high_priority",
-    "level_3_medium_hazard",
-    "level_4_developing_risk",
-    "level_5_monitoring_nuisance",
-}
-
 
 def _find_project_root() -> Path:
     """Find project root by looking for pyproject.toml, walking up from cwd."""
@@ -46,46 +37,31 @@ def _get_email_from_keyring(account: str) -> str | None:
     return value.strip() if value else None
 
 
-def _validate_risk_levels(risk_levels: dict) -> None:
-    """Validate that all required risk levels are present. Raises ValueError if any are missing."""
-    if not isinstance(risk_levels, dict):
+def _validate_attributes(attributes: dict) -> None:
+    """Validate attributes structure. Raises ValueError if invalid."""
+    if not isinstance(attributes, dict):
         raise ValueError(
-            f"risk_levels must be a dictionary. Got {type(risk_levels).__name__}."
+            f"attributes must be a dictionary. Got {type(attributes).__name__}."
         )
     
-    present_keys = set(str(k) for k in risk_levels.keys())
-    missing = REQUIRED_RISK_LEVELS - present_keys
-    
-    if missing:
-        missing_list = ", ".join(sorted(missing))
-        raise ValueError(
-            f"Missing required risk levels: {missing_list}. "
-            f"Config must contain all five required levels: {', '.join(sorted(REQUIRED_RISK_LEVELS))}"
-        )
-    
-    # Validate each required level has the required fields
-    for level_key in REQUIRED_RISK_LEVELS:
-        level_data = risk_levels.get(level_key)
-        if not isinstance(level_data, dict):
+    # Each attribute category should be a dict of value -> description
+    for attr_name, attr_values in attributes.items():
+        if not isinstance(attr_values, dict):
             raise ValueError(
-                f"Risk level '{level_key}' must be a dictionary with description, visual_indicators, and report_template."
+                f"Attribute '{attr_name}' must be a dictionary mapping values to descriptions."
             )
-        required_fields = {"description", "visual_indicators", "report_template"}
-        level_fields = set(level_data.keys())
-        missing_fields = required_fields - level_fields
-        if missing_fields:
-            raise ValueError(
-                f"Risk level '{level_key}' is missing required fields: {', '.join(sorted(missing_fields))}"
-            )
+        for value_key, description in attr_values.items():
+            if not isinstance(description, str):
+                raise ValueError(
+                    f"Attribute '{attr_name}' value '{value_key}' must have a string description."
+                )
 
 
-def load_config(config_path: Path | None = None, require_email: bool = True) -> dict:
+def load_config(config_path: Path | None = None) -> dict:
     """Load config from YAML and keyring. Raises FileNotFoundError or ValueError if invalid.
     
     Args:
         config_path: Optional path to config file. If None, searches default locations.
-        require_email: If True, raises ValueError when email is not in keyring. If False,
-                      email will be None when not found (useful for listing risk levels).
     """
     for path in _config_paths(config_path):
         if path.exists():
@@ -94,7 +70,7 @@ def load_config(config_path: Path | None = None, require_email: bool = True) -> 
             report_url = str(data.get("report_url", "https://www.fillthathole.org.uk"))
             keyring_account = str(data.get("keyring_account", "email"))
             email = _get_email_from_keyring(keyring_account)
-            if require_email and not email:
+            if not email:
                 raise ValueError(
                     f"Email not found in keyring. Run:\n"
                     f"  report-pothole setup\n"
@@ -102,38 +78,46 @@ def load_config(config_path: Path | None = None, require_email: bool = True) -> 
                     f'  keyring set {SERVICE_NAME} {keyring_account} "your@email.com"'
                 )
             
-            # Load and validate risk_levels
-            raw_risk_levels = data.get("risk_levels")
-            if raw_risk_levels is None:
+            # Load and validate attributes
+            raw_attributes = data.get("attributes")
+            if raw_attributes is None:
                 raise ValueError(
-                    "Config must contain 'risk_levels' section. "
-                    f"Required levels: {', '.join(sorted(REQUIRED_RISK_LEVELS))}"
+                    "Config must contain 'attributes' section defining available attribute values."
                 )
-            _validate_risk_levels(raw_risk_levels)
+            _validate_attributes(raw_attributes)
             
-            # Normalize risk_levels keys to strings and validate structure
-            # After validation, all required levels are guaranteed to be dicts,
-            # but we still check to handle any extra levels that might not be dicts
-            risk_levels = {}
-            for k, v in raw_risk_levels.items():
-                if not isinstance(v, dict):
+            # Normalize attributes: ensure all keys and values are strings
+            attributes = {}
+            for attr_name, attr_values in raw_attributes.items():
+                if not isinstance(attr_values, dict):
                     continue
-                risk_levels[str(k)] = {
-                    "description": str(v.get("description", "")),
-                    "visual_indicators": str(v.get("visual_indicators", "")),
-                    "report_template": str(v.get("report_template", "")),
+                attributes[str(attr_name)] = {
+                    str(k): str(v) for k, v in attr_values.items()
                 }
             
-            # Verify all required levels are present after normalization
-            # (defensive check in case normalization somehow skipped a required level)
-            present_keys = set(risk_levels.keys())
-            missing = REQUIRED_RISK_LEVELS - present_keys
-            if missing:
-                missing_list = ", ".join(sorted(missing))
+            # Load report_template (required)
+            report_template = data.get("report_template")
+            if report_template is None:
                 raise ValueError(
-                    f"Required risk levels missing after normalization: {missing_list}. "
-                    f"This should not happen - please report this bug."
+                    "Config must contain 'report_template' section with a parameterized template."
                 )
+            if not isinstance(report_template, str):
+                raise ValueError(
+                    f"report_template must be a string. Got {type(report_template).__name__}."
+                )
+            
+            # Load attribute_phrases (optional, defaults to empty dict)
+            raw_phrases = data.get("attribute_phrases", {})
+            if not isinstance(raw_phrases, dict):
+                raw_phrases = {}
+            attribute_phrases = {}
+            for phrase_key, phrase_values in raw_phrases.items():
+                if isinstance(phrase_values, dict):
+                    attribute_phrases[str(phrase_key)] = {
+                        str(k): str(v) for k, v in phrase_values.items()
+                    }
+                else:
+                    attribute_phrases[str(phrase_key)] = str(phrase_values)
             
             # Load advice_for_reporters (optional)
             raw_advice = data.get("advice_for_reporters", {})
@@ -151,7 +135,9 @@ def load_config(config_path: Path | None = None, require_email: bool = True) -> 
             result = {
                 "report_url": report_url,
                 "email": email,
-                "risk_levels": risk_levels,
+                "attributes": attributes,
+                "report_template": report_template,
+                "attribute_phrases": attribute_phrases,
                 "advice_for_reporters": advice_for_reporters,
                 "_loaded_from": str(path),
                 "_keyring_service": SERVICE_NAME,
@@ -165,5 +151,5 @@ def load_config(config_path: Path | None = None, require_email: bool = True) -> 
         f"With content:\n"
         '  report_url: "https://www.fillthathole.org.uk"\n'
         '  keyring_account: "email"  # optional, default "email"\n'
-        '  risk_levels:\n    level_1_emergency:\n      description: "..."\n      visual_indicators: "..."\n      report_template: "..."'
+        '  attributes:\n    depth:\n      lt40mm: "Less than 40mm"\n  report_template: "{severity}: {description}"\n  attribute_phrases:\n    severity:\n      gt50mm_sharp: "EMERGENCY"'
     )
