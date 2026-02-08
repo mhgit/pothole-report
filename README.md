@@ -68,6 +68,23 @@ advice_for_reporters:
 
 Or place it at `~/.config/pothole-report/pothole-report.yaml`. The config must include `attributes` (defining available values for each attribute category), `report_template` (a parameterized template with placeholders), and optionally `attribute_phrases` (mappings for generating report text from attribute combinations).
 
+### Check sites config (optional)
+
+Create `conf/pothole-checking.yaml` to enable the **"Existing pothole reports"** panel. This panel appears above the main report with clickable links so you can check whether a defect has already been reported before submitting a new one.
+
+```yaml
+# conf/pothole-checking.yaml
+check_sites:
+  - name: "Fill That Hole"
+    url: "https://www.fillthathole.org.uk/around?lat={lat}&lon={lon}&zoom=16"
+  - name: "Surrey (Tell Us)"
+    url: "https://tellus.surreycc.gov.uk/reports/Surrey?lat={lat}&lon={lon}&zoom=16"
+```
+
+Each entry needs a `name` (label shown in the panel) and a `url` (template). Placeholders `{lat}` and `{lon}` (or `{latitude}` / `{longitude}`) are replaced with the photo's GPS coordinates (rounded to 6 decimal places). Add as many council or reporting sites as you like.
+
+Search order: `conf/pothole-checking.yaml` (project root), then `~/.config/pothole-report/pothole-checking.yaml`. If the file is missing or has no `check_sites` entries, a warning is printed and the panel is omitted. If the file is invalid (bad YAML or missing `name`/`url`), an error is printed and the panel is omitted (the main report still runs).
+
 ### Store your email (first run)
 
 Email is stored in macOS Keychain via keyring—never in config files:
@@ -119,6 +136,7 @@ uv run report-pothole remove-keyring -c conf/pothole-report.yaml  # remove store
 
 One report per folder. The report includes:
 
+- **Existing pothole reports** panel (above the main report) — clickable links to check if a defect is already reported (e.g. Fill That Hole map, Surrey Tell Us). Requires `conf/pothole-checking.yaml`; see [Check sites config](#check-sites-config-optional).
 - **Postcode** and address (from reverse geocoding)
 - **Fill That Hole** and **Google Maps** (clickable cyan links in the report body)
 - **Attributes** section (lists selected attributes with descriptions, e.g., "depth: gt50mm (Greater than 50mm)")

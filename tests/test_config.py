@@ -5,7 +5,14 @@ from unittest.mock import patch
 
 import pytest
 
-from pothole_report.config import _config_paths, _find_project_root, load_config
+from pothole_report.config import (
+    _check_config_paths,
+    _config_paths,
+    _find_project_root,
+    expand_check_url,
+    load_check_config,
+    load_config,
+)
 
 
 @patch("pothole_report.config._get_email_from_keyring")
@@ -184,3 +191,155 @@ def test_config_paths_uses_project_root(tmp_path: Path, monkeypatch: pytest.Monk
     # Should find conf/pothole-report.yaml relative to project root, not subdir
     assert paths[0] == project_root / "conf" / "pothole-report.yaml"
     assert paths[0].exists()
+
+
+# ---------------------------------------------------------------------------
+# Tests for pothole-checking.yaml (load_check_config / expand_check_url)
+# ---------------------------------------------------------------------------
+
+
+def test_check_config_paths_override(tmp_path: Path) -> None:
+    """_check_config_paths returns only the override when provided."""
+    override = tmp_path / "custom-check.yaml"
+    assert _check_config_paths(override) == [override]
+
+
+def test_check_config_paths_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """_check_config_paths returns project and home paths when no override."""
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    (project_root / "pyproject.toml").write_text("", encoding="utf-8")
+    monkeypatch.chdir(project_root)
+    paths = _check_config_paths(None)
+    assert len(paths) == 2
+    assert paths[0] == project_root / "conf" / "pothole-checking.yaml"
+    assert "pothole-checking.yaml" in str(paths[1])
+
+
+def test_load_check_config_valid(tmp_path: Path) -> None:
+    """Valid pothole-checking.yaml returns list of site dicts."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text(
+        'check_sites:\n'
+        '  - name: "Site A"\n'
+        '    url: "https://a.example.com?lat={lat}&lon={lon}"\n'
+        '  - name: "Site B"\n'
+        '    url: "https://b.example.com"\n',
+        encoding="utf-8",
+    )
+    sites = load_check_config(config_path)
+    assert len(sites) == 2
+    assert sites[0]["name"] == "Site A"
+    assert "{lat}" in sites[0]["url"]
+    assert sites[1]["name"] == "Site B"
+
+
+def test_load_check_config_missing_file_returns_empty(tmp_path: Path) -> None:
+    """When file does not exist, return empty list."""
+    missing = tmp_path / "nonexistent.yaml"
+    assert load_check_config(missing) == []
+
+
+def test_load_check_config_empty_check_sites(tmp_path: Path) -> None:
+    """File exists but check_sites is empty list → return []."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text("check_sites: []\n", encoding="utf-8")
+    assert load_check_config(config_path) == []
+
+
+def test_load_check_config_missing_check_sites_key(tmp_path: Path) -> None:
+    """File exists but has no check_sites key → return []."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text("some_other_key: true\n", encoding="utf-8")
+    assert load_check_config(config_path) == []
+
+
+def test_load_check_config_invalid_yaml(tmp_path: Path) -> None:
+    """Broken YAML raises ValueError."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text("check_sites:\n  - name: [unbalanced", encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid YAML"):
+        load_check_config(config_path)
+
+
+def test_load_check_config_check_sites_not_list(tmp_path: Path) -> None:
+    """check_sites is not a list → raises ValueError."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text('check_sites: "not a list"\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="must be a list"):
+        load_check_config(config_path)
+
+
+def test_load_check_config_entry_missing_name(tmp_path: Path) -> None:
+    """Entry without name → raises ValueError."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text(
+        'check_sites:\n  - url: "https://example.com"\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="missing a valid 'name'"):
+        load_check_config(config_path)
+
+
+def test_load_check_config_entry_missing_url(tmp_path: Path) -> None:
+    """Entry without url → raises ValueError."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text(
+        'check_sites:\n  - name: "Site A"\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="missing a valid 'url'"):
+        load_check_config(config_path)
+
+
+def test_load_check_config_entry_not_dict(tmp_path: Path) -> None:
+    """Entry that is a plain string → raises ValueError."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text(
+        'check_sites:\n  - "just a string"\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="must be a mapping"):
+        load_check_config(config_path)
+
+
+def test_load_check_config_file_not_mapping(tmp_path: Path) -> None:
+    """File whose root is not a mapping → raises ValueError."""
+    config_path = tmp_path / "pothole-checking.yaml"
+    config_path.write_text("- item1\n- item2\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="must contain a YAML mapping"):
+        load_check_config(config_path)
+
+
+def test_expand_check_url_basic() -> None:
+    """Placeholders {lat} and {lon} are replaced."""
+    url = expand_check_url("https://x.com?lat={lat}&lon={lon}", 51.123456, -0.654321)
+    assert "51.123456" in url
+    assert "-0.654321" in url
+    assert "{lat}" not in url
+    assert "{lon}" not in url
+
+
+def test_expand_check_url_aliases() -> None:
+    """Aliases {latitude} and {longitude} are also replaced."""
+    url = expand_check_url(
+        "https://x.com?latitude={latitude}&longitude={longitude}",
+        51.5,
+        -0.1,
+    )
+    assert "51.5" in url
+    assert "-0.1" in url
+    assert "{latitude}" not in url
+    assert "{longitude}" not in url
+
+
+def test_expand_check_url_rounds_to_six_decimals() -> None:
+    """Coordinates are rounded to 6 decimal places."""
+    url = expand_check_url("https://x.com?lat={lat}", 51.1234567890, 0.0)
+    assert "51.123457" in url
+
+
+def test_expand_check_url_no_placeholders() -> None:
+    """Plain URL with no placeholders is returned unchanged."""
+    original = "https://example.com/reports"
+    assert expand_check_url(original, 51.0, -0.1) == original

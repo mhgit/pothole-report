@@ -1,0 +1,9 @@
+# Existing pothole report check sites
+# Listed links appear in an "Existing pothole reports" panel above the main report.
+# Placeholders: {lat}, {lon} (also {latitude}, {longitude}) — replaced with GPS coordinates.
+
+check_sites:
+  - name: "Fill That Hole"
+    url: "https://www.fillthathole.org.uk/around?lat={lat}&lon={lon}&zoom=4"
+  - name: "Surrey (Tell Us)"
+    url: "https://tellus.surreycc.gov.uk/reports/Surrey?lat={lat}&lon={lon}&zoom=12"

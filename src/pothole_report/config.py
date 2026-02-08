@@ -153,3 +153,98 @@ def load_config(config_path: Path | None = None) -> dict:
         '  keyring_account: "email"  # optional, default "email"\n'
         '  attributes:\n    depth:\n      lt40mm: "Less than 40mm"\n  report_template: "{severity}: {description}"\n  attribute_phrases:\n    severity:\n      gt50mm_sharp: "EMERGENCY"'
     )
+
+
+# ---------------------------------------------------------------------------
+# Check-config (pothole-checking.yaml) – separate file for existing reports
+# ---------------------------------------------------------------------------
+
+
+def _check_config_paths(override: Path | None) -> list[Path]:
+    """Return search order for pothole-checking.yaml."""
+    if override is not None:
+        return [override]
+    project_root = _find_project_root()
+    return [
+        project_root / "conf" / "pothole-checking.yaml",
+        Path.home() / ".config" / "pothole-report" / "pothole-checking.yaml",
+    ]
+
+
+def load_check_config(config_path: Path | None = None) -> list[dict]:
+    """Load check sites from pothole-checking.yaml.
+
+    Returns:
+        List of dicts with ``name`` and ``url`` keys, or ``[]`` when the
+        file is missing or ``check_sites`` is absent / empty.
+
+    Raises:
+        ValueError: When the file exists but contains invalid YAML or an
+            invalid ``check_sites`` structure.
+    """
+    for path in _check_config_paths(config_path):
+        if path.exists():
+            with path.open() as f:
+                try:
+                    data = yaml.safe_load(f)
+                except yaml.YAMLError as exc:
+                    raise ValueError(
+                        f"Invalid YAML in {path}: {exc}"
+                    ) from exc
+
+            if not isinstance(data, dict):
+                raise ValueError(
+                    f"Invalid pothole-checking.yaml ({path}): "
+                    "file must contain a YAML mapping."
+                )
+
+            raw_sites = data.get("check_sites")
+            if raw_sites is None or raw_sites == []:
+                return []
+
+            if not isinstance(raw_sites, list):
+                raise ValueError(
+                    f"Invalid pothole-checking.yaml ({path}): "
+                    "check_sites must be a list."
+                )
+
+            sites: list[dict] = []
+            for idx, entry in enumerate(raw_sites):
+                if not isinstance(entry, dict):
+                    raise ValueError(
+                        f"Invalid pothole-checking.yaml ({path}): "
+                        f"check_sites[{idx}] must be a mapping with 'name' and 'url'."
+                    )
+                name = entry.get("name")
+                url = entry.get("url")
+                if not isinstance(name, str) or not name.strip():
+                    raise ValueError(
+                        f"Invalid pothole-checking.yaml ({path}): "
+                        f"check_sites[{idx}] is missing a valid 'name' string."
+                    )
+                if not isinstance(url, str) or not url.strip():
+                    raise ValueError(
+                        f"Invalid pothole-checking.yaml ({path}): "
+                        f"check_sites[{idx}] is missing a valid 'url' string."
+                    )
+                sites.append({"name": name.strip(), "url": url.strip()})
+            return sites
+
+    # No file found at any search path
+    return []
+
+
+def expand_check_url(template: str, lat: float, lon: float) -> str:
+    """Replace ``{lat}``, ``{lon}`` (and aliases) in a URL template.
+
+    Coordinates are rounded to 6 decimal places.
+    """
+    lat_str = str(round(lat, 6))
+    lon_str = str(round(lon, 6))
+    return (
+        template
+        .replace("{lat}", lat_str)
+        .replace("{lon}", lon_str)
+        .replace("{latitude}", lat_str)
+        .replace("{longitude}", lon_str)
+    )
