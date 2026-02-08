@@ -9,7 +9,7 @@ import keyring
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TaskProgressColumn
 
-from pothole_report.config import SERVICE_NAME, load_config
+from pothole_report.config import SERVICE_NAME, expand_check_url, load_check_config, load_config
 from pothole_report.extract import extract_all
 from pothole_report.geocode import reverse_geocode
 from pothole_report.output import build_report_record, print_report
@@ -372,6 +372,24 @@ def main() -> None:
     if not args.folder:
         parser.error("-f/--folder is required")
 
+    # Validate folder and scan for images early — before interactive prompts
+    # so the user doesn't waste time if the path is wrong.
+    try:
+        paths = scan_folder(args.folder)
+    except NotADirectoryError as e:
+        console.print(f"[red]Error:[/] {e}")
+        raise SystemExit(1) from e
+
+    if not paths:
+        console.print("[yellow]No JPG/PNG files found in folder.[/]")
+        return
+
+    if args.verbose:
+        console.print(f"[dim]Found {len(paths)} image file(s) in folder[/]")
+        for path in paths:
+            console.print(f"[dim]  - {path.name}[/]")
+        console.print("")
+
     # Collect attributes from CLI flags or interactive mode
     attributes = {}
     if args.interactive:
@@ -435,23 +453,6 @@ def main() -> None:
     email = config.get("email")
     report_url = config["report_url"]
     advice_for_reporters = config.get("advice_for_reporters", {})
-
-    # Scan folder
-    try:
-        paths = scan_folder(args.folder)
-    except NotADirectoryError as e:
-        console.print(f"[red]Error:[/] {e}")
-        raise SystemExit(1) from e
-
-    if not paths:
-        console.print("[yellow]No JPG/PNG files found in folder.[/]")
-        return
-
-    if args.verbose:
-        console.print(f"[dim]Found {len(paths)} image file(s) in folder[/]")
-        for path in paths:
-            console.print(f"[dim]  - {path.name}[/]")
-        console.print("")
 
     # Extract from all images; use earliest-dated one for GPS
     extracted_list: list = []
@@ -541,4 +542,24 @@ def main() -> None:
         advice_for_reporters,
         image_names,
     )
-    print_report(record, console)
+
+    # Load check sites for "Existing pothole reports" panel
+    check_links: list[tuple[str, str]] = []
+    try:
+        check_sites = load_check_config()
+    except ValueError as e:
+        console.print(f"[red]Error:[/] {e}")
+        check_sites = []
+
+    if not check_sites:
+        console.print(
+            "[yellow]Warning:[/] No check sites configured. "
+            "See README.md for how to set up conf/pothole-checking.yaml."
+        )
+    else:
+        check_links = [
+            (entry["name"], expand_check_url(entry["url"], record.lat, record.lon))
+            for entry in check_sites
+        ]
+
+    print_report(record, console, check_links=check_links)

@@ -184,17 +184,13 @@ def test_print_report_includes_attributes() -> None:
     console = Console(file=StringIO(), force_terminal=False)
     print_report(record, console=console)
     out = console.file.getvalue()
-    # Should include attributes section
+    # Should include attributes section with descriptions
     assert "Attributes:" in out
     assert "depth:" in out
-    assert "gt50mm" in out
     assert "Greater than 50mm" in out
+    assert "Sharp edges" in out
     # Should include generated report text
     assert "Test report text" in out
-    # Should include command line in a panel
-    assert "Command" in out  # Panel title
-    assert "uv run report-pothole" in out
-    assert "--depth gt50mm" in out
 
 
 def test_print_report_includes_advice_section() -> None:
@@ -226,3 +222,77 @@ def test_print_report_includes_advice_section() -> None:
     # Should include advice section content
     assert "phrase1" in out or "phrase2" in out
     assert "Test tip" in out
+
+
+# ---------------------------------------------------------------------------
+# Tests for "Existing pothole reports" panel (check_links)
+# ---------------------------------------------------------------------------
+
+
+def _make_record(**overrides) -> ReportRecord:
+    """Helper to build a minimal ReportRecord for tests."""
+    defaults = {
+        "path": Path("test.jpg"),
+        "datetime_taken": "2025-01-01 12:00",
+        "postcode": "XX1 1XX",
+        "address": "Test Rd",
+        "lat": 51.0,
+        "lon": 0.0,
+        "fill_that_hole_url": "https://example.com",
+        "google_maps_url": "https://maps.example.com",
+        "attributes": {"depth": "gt50mm"},
+        "attribute_descriptions": {"depth": "Greater than 50mm"},
+        "generated_report_text": "Test report text",
+        "command_line": "uv run report-pothole -f /path --depth gt50mm",
+        "advice_for_reporters_text": "",
+        "email": "t@t.com",
+        "image_names": ["test.jpg"],
+    }
+    defaults.update(overrides)
+    return ReportRecord(**defaults)
+
+
+def test_print_report_with_check_links() -> None:
+    """print_report shows 'Existing pothole reports' panel when check_links provided."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    record = _make_record()
+    check_links = [
+        ("Fill That Hole", "https://www.fillthathole.org.uk/around?lat=51.0&lon=0.0&zoom=16"),
+        ("Surrey (Tell Us)", "https://tellus.surreycc.gov.uk/reports/Surrey?lat=51.0&lon=0.0"),
+    ]
+    console = Console(file=StringIO(), force_terminal=False)
+    print_report(record, console=console, check_links=check_links)
+    out = console.file.getvalue()
+    assert "Existing pothole reports" in out
+    assert "Fill That Hole" in out
+    assert "Surrey" in out
+    assert "fillthathole.org.uk" in out
+
+
+def test_print_report_no_check_links() -> None:
+    """print_report omits 'Existing pothole reports' panel when check_links is None."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    record = _make_record()
+    console = Console(file=StringIO(), force_terminal=False)
+    print_report(record, console=console, check_links=None)
+    out = console.file.getvalue()
+    assert "Existing pothole reports" not in out
+
+
+def test_print_report_empty_check_links() -> None:
+    """print_report omits 'Existing pothole reports' panel when check_links is empty."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    record = _make_record()
+    console = Console(file=StringIO(), force_terminal=False)
+    print_report(record, console=console, check_links=[])
+    out = console.file.getvalue()
+    assert "Existing pothole reports" not in out

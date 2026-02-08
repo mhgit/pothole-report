@@ -99,9 +99,40 @@ def _image_table(image_names: list[str]) -> Table:
     return table
 
 
-def print_report(record: ReportRecord, console: Console | None = None) -> None:
-    """Print one report bundle as a Rich panel."""
+def print_report(
+    record: ReportRecord,
+    console: Console | None = None,
+    check_links: list[tuple[str, str]] | None = None,
+) -> None:
+    """Print one report bundle as a Rich panel.
+
+    Args:
+        record: The report data to display.
+        console: Rich console (defaults to a new Console).
+        check_links: Optional list of (name, url) tuples for existing-reports
+            panel.  When non-empty an "Existing pothole reports" panel is
+            printed *above* the main report.
+    """
     c = console or Console()
+
+    # --- "Existing pothole reports" panel (printed first, if any) ----------
+    if check_links:
+        link_lines = []
+        for name, url in check_links:
+            link_lines.append(
+                f"[bold]{name}:[/] [bold cyan][link={url}]{url}[/link][/]"
+            )
+        check_body = Text.from_markup("\n".join(link_lines))
+        c.print(
+            Panel(
+                check_body,
+                title="Existing pothole reports",
+                border_style="green",
+            )
+        )
+        c.print()  # blank line between panels
+
+    # --- Main report panel -------------------------------------------------
     dt = record.datetime_taken if record.datetime_taken else "—"
     fth_link = f"[bold cyan][link={record.fill_that_hole_url}]Fill That Hole[/link][/]"
     gm_link = f"[bold cyan][link={record.google_maps_url}]Google Maps[/link][/]"
