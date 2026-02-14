@@ -2,13 +2,13 @@
 
 A CLI tool that batch-processes pothole photos, extracts GPS metadata, reverse-geocodes to UK postcodes, and outputs a report bundle ready for manual submission via [Fill That Hole](https://www.fillthathole.org.uk/) (Cycling UK). One site covers all UK councils.
 
-Built for cyclists who encounter multiple road defects on a single ride: take photos and keep riding, then run this tool to generate a report bundle. **One report per folder.** GPS is taken from the earliest-dated image—ensure your first photo (by capture time) is the actual pothole.
+Built for UK based cyclists who encounter multiple road defects on a single ride: take photos and keep riding, then run this tool to generate a report bundle. **One report per folder.** GPS is taken from the earliest-dated image—ensure your first photo (by capture time) is the actual pothole.
 
 ## Tech Stack
 
 - **Runtime:** Python 3.14
 - **Package Manager:** [uv](https://github.com/astral-sh/uv)
-- **Libraries:** Pillow (EXIF), geopy (Nominatim), rich (CLI output), PyYAML (config), keyring (macOS Keychain)
+- **Libraries:** Pillow (EXIF), geopy (Nominatim), rich (CLI output), PyYAML (config), keyring (system credential store)
 
 ## Getting Started
 
@@ -25,7 +25,7 @@ uv sync
 
 ### Config
 
-Create `conf/pothole-report.yaml` (or copy from `conf/pothole-report.example.yaml`):
+Create `conf/pothole-report.yaml` (use `conf/pothole-report.yaml` and `conf/pothole-checking.yaml` in this repo as reference):
 
 ```yaml
 report_url: "https://www.fillthathole.org.uk"
@@ -87,7 +87,7 @@ Search order: `conf/pothole-checking.yaml` (project root), then `~/.config/potho
 
 ### Store your email (first run)
 
-Email is stored in macOS Keychain via keyring—never in config files:
+Email is stored via [keyring](https://pypi.org/project/keyring/) (your system credential store)—never in config files. Backends: **macOS** Keychain, **Windows** Credential Manager, **Linux** Secret Service (e.g. GNOME Keyring, KWallet). Optional in config: `keyring_account: "email"` (default `"email"`) to choose the keyring entry name.
 
 ```bash
 uv run report-pothole setup
@@ -130,7 +130,7 @@ uv run report-pothole remove-keyring -c conf/pothole-report.yaml  # remove store
 | `--visibility` | Visibility (e.g., obscured_water, obscured_shadows, visible) |
 | `--surface` | Surface condition (e.g., exposed_sub_base, loose_gravel, longitudinal_crack, hairline) |
 | `-c`, `--config` | Path to config file (optional override) |
-| `-v`, `--verbose` | Show which files were skipped (no GPS / geocode failed) |
+| `-v`, `--verbose` | Show verbose output: config path, attributes, report preview, image list, which files were skipped (no GPS / geocode failed), and other processing details |
 
 ### Output
 
@@ -141,12 +141,11 @@ One report per folder. The report includes:
 - **Fill That Hole** and **Google Maps** (clickable cyan links in the report body)
 - **Attributes** section (lists selected attributes with descriptions, e.g., "depth: gt50mm (Greater than 50mm)")
 - **Generated Report** (dynamically generated text based on selected attributes, ready to copy-paste for council forms)
-- **Command Line** (equivalent command that could be used to reproduce the same report)
 - **Advice for Reporters** section (includes key phrases and pro tips)
 - **Date/time** from the earliest-dated image (used for GPS)
 - **Image listing** (3-column table of all images in the folder)
 
-The report text is generated from the `report_template` using the selected attributes. The system looks up phrases from `attribute_phrases` based on attribute combinations to fill template placeholders. After generating a report interactively, the equivalent command-line flags are displayed so you can reproduce the same report later.
+The report text is generated from the `report_template` using the selected attributes. The system looks up phrases from `attribute_phrases` based on attribute combinations to fill template placeholders.
 
 Images with slightly different GPS (natural GPS drift) are normal. The earliest image's coordinates are used.
 
