@@ -51,21 +51,21 @@ def build_report_record(
     lon = round(extracted.lon, 6)
     fth_url = f"{base}/around?lat={lat}&lon={lon}&zoom=4"
     gm_url = f"https://www.google.com/maps?q={lat},{lon}"
-    
+
     # Build advice_for_reporters text from key phrases and pro tip
     advice_lines = []
-    
+
     key_phrases = advice_for_reporters.get("key_phrases", [])
     if key_phrases:
         phrases_str = ", ".join(key_phrases)
         advice_lines.append(f"[bold]Key Phrases:[/] {phrases_str}")
-    
+
     pro_tip = advice_for_reporters.get("pro_tip", "")
     if pro_tip:
         advice_lines.append(f"[bold]Pro Tip:[/] {pro_tip}")
-    
+
     advice_text = "\n".join(advice_lines) if advice_lines else ""
-    
+
     return ReportRecord(
         path=extracted.path,
         datetime_taken=extracted.datetime_taken,
@@ -136,7 +136,7 @@ def print_report(
     dt = record.datetime_taken if record.datetime_taken else "—"
     fth_link = f"[bold cyan][link={record.fill_that_hole_url}]Fill That Hole[/link][/]"
     gm_link = f"[bold cyan][link={record.google_maps_url}]Google Maps[/link][/]"
-    
+
     # Build attributes section
     attr_lines = []
     for attr_name in sorted(record.attributes.keys()):
@@ -149,7 +149,7 @@ def print_report(
             attr_value = record.attributes[attr_name]
             attr_lines.append(f"  {attr_name}: {attr_value}")
     attributes_text = "\n".join(attr_lines) if attr_lines else "  (none)"
-    
+
     body_text = (
         f"[bold]File:[/] {record.path.name}\n"
         f"[bold]Date/Time taken:[/] {dt}\n"
@@ -162,7 +162,7 @@ def print_report(
         f"[bold]Report:[/]\n{record.generated_report_text}\n\n"
         f"[bold]Report as:[/] {record.email}\n\n"
     )
-    
+
     # Advice for reporters section (above image listing)
     advice_panel = None
     if record.advice_for_reporters_text:
@@ -171,14 +171,14 @@ def print_report(
             title="Advice for Reporters",
             border_style="yellow",
         )
-    
+
     img_table = _image_table(record.image_names)
-    
+
     # Build content group (without command line - it goes outside the box)
     content_parts = [Text.from_markup(body_text.strip())]
     if advice_panel:
         content_parts.append(advice_panel)
     content_parts.append(img_table)
-    
+
     content = Group(*content_parts)
     c.print(Panel(content, title=f"Report: {record.path.name}", border_style="blue"))
