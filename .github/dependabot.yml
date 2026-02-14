@@ -1,0 +1,15 @@
+# Dependabot is free on GitHub (including free tier). Enable under:
+# Settings → Code security and analysis → Dependabot alerts / Dependabot security updates.
+# Scans for vulnerabilities and opens PRs for dependency updates; runs on Sundays.
+# See README "Keeping up to date" for details.
+
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "09:00"
+      timezone: "Europe/London"
+    open-pull-requests-limit: 5
