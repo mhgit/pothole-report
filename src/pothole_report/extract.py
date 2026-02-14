@@ -36,7 +36,7 @@ def _parse_exif_datetime(value: str | None) -> str | None:
         # EXIF format: "YYYY:MM:DD HH:MM:SS"
         dt = datetime.strptime(value.strip()[:19], "%Y:%m:%d %H:%M:%S")
         return dt.strftime("%Y-%m-%d %H:%M")
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
 
 
@@ -50,9 +50,9 @@ def extract(path: Path) -> tuple[float, float] | None:
         if not gps:
             return None
         lat_data = gps.get(2)  # GPSLatitude
-        lat_ref = gps.get(1)   # GPSLatitudeRef
+        lat_ref = gps.get(1)  # GPSLatitudeRef
         lon_data = gps.get(4)  # GPSLongitude
-        lon_ref = gps.get(3)   # GPSLongitudeRef
+        lon_ref = gps.get(3)  # GPSLongitudeRef
         if not all([lat_data, lat_ref, lon_data, lon_ref]):
             return None
         if len(lat_data) != 3 or len(lon_data) != 3:

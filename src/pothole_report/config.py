@@ -43,7 +43,7 @@ def _validate_attributes(attributes: dict) -> None:
         raise ValueError(
             f"attributes must be a dictionary. Got {type(attributes).__name__}."
         )
-    
+
     # Each attribute category should be a dict of value -> description
     for attr_name, attr_values in attributes.items():
         if not isinstance(attr_values, dict):
@@ -59,7 +59,7 @@ def _validate_attributes(attributes: dict) -> None:
 
 def load_config(config_path: Path | None = None) -> dict:
     """Load config from YAML and keyring. Raises FileNotFoundError or ValueError if invalid.
-    
+
     Args:
         config_path: Optional path to config file. If None, searches default locations.
     """
@@ -77,7 +77,7 @@ def load_config(config_path: Path | None = None) -> dict:
                     f"Or store manually:\n"
                     f'  keyring set {SERVICE_NAME} {keyring_account} "your@email.com"'
                 )
-            
+
             # Load and validate attributes
             raw_attributes = data.get("attributes")
             if raw_attributes is None:
@@ -85,7 +85,7 @@ def load_config(config_path: Path | None = None) -> dict:
                     "Config must contain 'attributes' section defining available attribute values."
                 )
             _validate_attributes(raw_attributes)
-            
+
             # Normalize attributes: ensure all keys and values are strings
             attributes = {}
             for attr_name, attr_values in raw_attributes.items():
@@ -94,7 +94,7 @@ def load_config(config_path: Path | None = None) -> dict:
                 attributes[str(attr_name)] = {
                     str(k): str(v) for k, v in attr_values.items()
                 }
-            
+
             # Load report_template (required)
             report_template = data.get("report_template")
             if report_template is None:
@@ -105,7 +105,7 @@ def load_config(config_path: Path | None = None) -> dict:
                 raise ValueError(
                     f"report_template must be a string. Got {type(report_template).__name__}."
                 )
-            
+
             # Load attribute_phrases (optional, defaults to empty dict)
             raw_phrases = data.get("attribute_phrases", {})
             if not isinstance(raw_phrases, dict):
@@ -118,7 +118,7 @@ def load_config(config_path: Path | None = None) -> dict:
                     }
                 else:
                     attribute_phrases[str(phrase_key)] = str(phrase_values)
-            
+
             # Load advice_for_reporters (optional)
             raw_advice = data.get("advice_for_reporters", {})
             if not isinstance(raw_advice, dict):
@@ -131,7 +131,7 @@ def load_config(config_path: Path | None = None) -> dict:
                 ),
                 "pro_tip": str(raw_advice.get("pro_tip", "")),
             }
-            
+
             result = {
                 "report_url": report_url,
                 "email": email,
@@ -188,9 +188,7 @@ def load_check_config(config_path: Path | None = None) -> list[dict]:
                 try:
                     data = yaml.safe_load(f)
                 except yaml.YAMLError as exc:
-                    raise ValueError(
-                        f"Invalid YAML in {path}: {exc}"
-                    ) from exc
+                    raise ValueError(f"Invalid YAML in {path}: {exc}") from exc
 
             if not isinstance(data, dict):
                 raise ValueError(
@@ -242,8 +240,7 @@ def expand_check_url(template: str, lat: float, lon: float) -> str:
     lat_str = str(round(lat, 6))
     lon_str = str(round(lon, 6))
     return (
-        template
-        .replace("{lat}", lat_str)
+        template.replace("{lat}", lat_str)
         .replace("{lon}", lon_str)
         .replace("{latitude}", lat_str)
         .replace("{longitude}", lon_str)
