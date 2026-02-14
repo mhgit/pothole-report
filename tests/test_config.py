@@ -33,7 +33,9 @@ def test_load_config_valid(mock_keyring: object, temp_config: Path) -> None:
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_raises_when_email_missing(mock_keyring: object, temp_config: Path) -> None:
+def test_load_config_raises_when_email_missing(
+    mock_keyring: object, temp_config: Path
+) -> None:
     """Load config raises ValueError when keyring has no email."""
     mock_keyring.return_value = None
     with pytest.raises(ValueError) as exc_info:
@@ -75,15 +77,17 @@ def test_load_config_attributes_not_dict(mock_keyring: object, tmp_path: Path) -
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_missing_report_template(mock_keyring: object, tmp_path: Path) -> None:
+def test_load_config_missing_report_template(
+    mock_keyring: object, tmp_path: Path
+) -> None:
     """Config without report_template raises ValueError."""
     mock_keyring.return_value = "test@example.com"
     config_path = tmp_path / "no_template.yaml"
-    config_content = '''report_url: "https://x.org"
+    config_content = """report_url: "https://x.org"
 attributes:
   depth:
     lt40mm: "Less than 40mm"
-'''
+"""
     config_path.write_text(config_content, encoding="utf-8")
     with pytest.raises(ValueError) as exc_info:
         load_config(config_path)
@@ -91,16 +95,18 @@ attributes:
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_report_template_not_string(mock_keyring: object, tmp_path: Path) -> None:
+def test_load_config_report_template_not_string(
+    mock_keyring: object, tmp_path: Path
+) -> None:
     """Config with report_template as non-string raises ValueError."""
     mock_keyring.return_value = "test@example.com"
     config_path = tmp_path / "bad_template.yaml"
-    config_content = '''report_url: "https://x.org"
+    config_content = """report_url: "https://x.org"
 attributes:
   depth:
     lt40mm: "Less than 40mm"
 report_template: 123
-'''
+"""
     config_path.write_text(config_content, encoding="utf-8")
     with pytest.raises(ValueError) as exc_info:
         load_config(config_path)
@@ -108,16 +114,18 @@ report_template: 123
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_attribute_phrases_optional(mock_keyring: object, tmp_path: Path) -> None:
+def test_load_config_attribute_phrases_optional(
+    mock_keyring: object, tmp_path: Path
+) -> None:
     """Config without attribute_phrases still loads successfully (defaults to empty dict)."""
     mock_keyring.return_value = "test@example.com"
     config_path = tmp_path / "no_phrases.yaml"
-    config_content = '''report_url: "https://x.org"
+    config_content = """report_url: "https://x.org"
 attributes:
   depth:
     lt40mm: "Less than 40mm"
 report_template: "{severity}: {description}"
-'''
+"""
     config_path.write_text(config_content, encoding="utf-8")
     config = load_config(config_path)
     assert "attribute_phrases" in config
@@ -125,16 +133,18 @@ report_template: "{severity}: {description}"
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_advice_for_reporters_optional(mock_keyring: object, tmp_path: Path) -> None:
+def test_load_config_advice_for_reporters_optional(
+    mock_keyring: object, tmp_path: Path
+) -> None:
     """Config without advice_for_reporters still loads successfully."""
     mock_keyring.return_value = "test@example.com"
     config_path = tmp_path / "no_advice.yaml"
-    config_content = '''report_url: "https://x.org"
+    config_content = """report_url: "https://x.org"
 attributes:
   depth:
     lt40mm: "Less than 40mm"
 report_template: "{severity}: {description}"
-'''
+"""
     config_path.write_text(config_content, encoding="utf-8")
     config = load_config(config_path)
     assert "advice_for_reporters" in config
@@ -143,22 +153,26 @@ report_template: "{severity}: {description}"
 
 
 @patch("pothole_report.config._get_email_from_keyring")
-def test_load_config_attribute_value_not_dict(mock_keyring: object, tmp_path: Path) -> None:
+def test_load_config_attribute_value_not_dict(
+    mock_keyring: object, tmp_path: Path
+) -> None:
     """Config with attribute value as non-dict raises ValueError."""
     mock_keyring.return_value = "test@example.com"
     config_path = tmp_path / "bad_attribute_value.yaml"
-    config_content = '''report_url: "https://x.org"
+    config_content = """report_url: "https://x.org"
 attributes:
   depth: "not a dict"
 report_template: "{severity}: {description}"
-'''
+"""
     config_path.write_text(config_content, encoding="utf-8")
     with pytest.raises(ValueError) as exc_info:
         load_config(config_path)
     assert "must be a dictionary" in str(exc_info.value)
 
 
-def test_find_project_root_finds_pyproject_toml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_find_project_root_finds_pyproject_toml(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """_find_project_root finds project root by looking for pyproject.toml."""
     # Create a mock project structure
     project_root = tmp_path / "project"
@@ -167,24 +181,28 @@ def test_find_project_root_finds_pyproject_toml(tmp_path: Path, monkeypatch: pyt
     (project_root / "conf").mkdir()
     subdir = project_root / "conf" / "subdir"
     subdir.mkdir(parents=True)
-    
+
     # Change to subdirectory
     monkeypatch.chdir(subdir)
     root = _find_project_root()
     assert root == project_root
 
 
-def test_config_paths_uses_project_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_config_paths_uses_project_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """_config_paths finds config relative to project root, not cwd."""
     # Create a mock project structure
     project_root = tmp_path / "project"
     project_root.mkdir()
     (project_root / "pyproject.toml").write_text("", encoding="utf-8")
     (project_root / "conf").mkdir()
-    (project_root / "conf" / "pothole-report.yaml").write_text("test: true", encoding="utf-8")
+    (project_root / "conf" / "pothole-report.yaml").write_text(
+        "test: true", encoding="utf-8"
+    )
     subdir = project_root / "conf" / "subdir"
     subdir.mkdir(parents=True)
-    
+
     # Change to subdirectory (simulating running from conf/subdir)
     monkeypatch.chdir(subdir)
     paths = _config_paths(None)
@@ -204,7 +222,9 @@ def test_check_config_paths_override(tmp_path: Path) -> None:
     assert _check_config_paths(override) == [override]
 
 
-def test_check_config_paths_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_check_config_paths_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """_check_config_paths returns project and home paths when no override."""
     project_root = tmp_path / "project"
     project_root.mkdir()
@@ -220,7 +240,7 @@ def test_load_check_config_valid(tmp_path: Path) -> None:
     """Valid pothole-checking.yaml returns list of site dicts."""
     config_path = tmp_path / "pothole-checking.yaml"
     config_path.write_text(
-        'check_sites:\n'
+        "check_sites:\n"
         '  - name: "Site A"\n'
         '    url: "https://a.example.com?lat={lat}&lon={lon}"\n'
         '  - name: "Site B"\n'

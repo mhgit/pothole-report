@@ -69,14 +69,16 @@ def test_extract_returns_none_when_dms_has_fewer_than_3_elements(
 
 
 @patch("pothole_report.extract.Image")
-def test_extract_returns_coords_when_gps_present(mock_image: MagicMock, tmp_path: Path) -> None:
+def test_extract_returns_coords_when_gps_present(
+    mock_image: MagicMock, tmp_path: Path
+) -> None:
     """Extract returns (lat, lon) when GPS EXIF is present."""
     # GPS: 51°30'0"N, 0°6'0"W -> 51.5, -0.1
     gps_ifd = {
-        1: "N",   # GPSLatitudeRef
+        1: "N",  # GPSLatitudeRef
         2: ((51, 1), (30, 1), (0, 1)),  # GPSLatitude (51, 30, 0)
-        3: "W",   # GPSLongitudeRef
-        4: ((0, 1), (6, 1), (0, 1)),    # GPSLongitude (0, 6, 0)
+        3: "W",  # GPSLongitudeRef
+        4: ((0, 1), (6, 1), (0, 1)),  # GPSLongitude (0, 6, 0)
     }
     exif_mock = MagicMock()
     exif_mock.get_ifd.return_value = gps_ifd
@@ -99,10 +101,14 @@ def test_extract_returns_coords_when_gps_present(mock_image: MagicMock, tmp_path
 
 
 @patch("pothole_report.extract.Image")
-def test_extract_datetime_parses_exif_format(mock_image: MagicMock, tmp_path: Path) -> None:
+def test_extract_datetime_parses_exif_format(
+    mock_image: MagicMock, tmp_path: Path
+) -> None:
     """Extract datetime parses EXIF DateTimeOriginal format."""
     exif_mock = MagicMock()
-    exif_mock.get.side_effect = lambda tag: "2025:01:15 14:32:00" if tag == 36867 else None
+    exif_mock.get.side_effect = lambda tag: (
+        "2025:01:15 14:32:00" if tag == 36867 else None
+    )
 
     img_mock = MagicMock()
     img_mock.getexif.return_value = exif_mock
@@ -119,7 +125,9 @@ def test_extract_datetime_parses_exif_format(mock_image: MagicMock, tmp_path: Pa
 
 
 @patch("pothole_report.extract.Image")
-def test_extract_all_returns_extracted_data(mock_image: MagicMock, tmp_path: Path) -> None:
+def test_extract_all_returns_extracted_data(
+    mock_image: MagicMock, tmp_path: Path
+) -> None:
     """extract_all returns ExtractedData when GPS present."""
     gps_ifd = {
         1: "N",
@@ -129,7 +137,9 @@ def test_extract_all_returns_extracted_data(mock_image: MagicMock, tmp_path: Pat
     }
     exif_mock = MagicMock()
     exif_mock.get_ifd.return_value = gps_ifd
-    exif_mock.get.side_effect = lambda tag: "2025:06:01 09:00:00" if tag in (36867, 306) else None
+    exif_mock.get.side_effect = lambda tag: (
+        "2025:06:01 09:00:00" if tag in (36867, 306) else None
+    )
 
     img_mock = MagicMock()
     img_mock.getexif.return_value = exif_mock
