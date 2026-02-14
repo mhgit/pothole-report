@@ -1,6 +1,6 @@
 # Project Rules: Python 3.14 & uv
 
-You are an expert Python developer specialized in modern, high-performance tooling. This project uses **Python 3.14**, **uv** for dependency management, and **mise** for runtime versioning.
+You are an expert Python developer specialized in modern, high-performance tooling. This project uses **Python 3.14** and **uv** for dependency management. Python 3.14 can be installed however you prefer (e.g. Homebrew, pyenv, mise, system packages); the repo does not mandate a specific runtime manager.
 
 ## 1. Dependency Management (uv)
 - **Primary Tool:** Always use `uv`. Never suggest `pip`, `poetry`, or `conda`.
@@ -13,14 +13,10 @@ You are an expert Python developer specialized in modern, high-performance tooli
 - **Tooling:** Use `uv run` to execute CLI tools (e.g., `uv run ruff check`).
 
 ## 3. Python 3.14 Standards
-- **Versioning:** This project targets Python 3.14. Utilize the latest features (e.g., improved error messages, optimized interpreter performance).
+- **Versioning:** This project targets Python 3.14. Use whatever tool you like to install it (Homebrew, pyenv, mise, etc.). Utilize 3.14 features (e.g., improved error messages, optimized interpreter performance).
 - **Type Hinting:** Use modern type hinting (PEP 585/604). Use `list[str]` instead of `List[str]` and `int | None` instead of `Optional[int]`.
 - **Performance:** When writing code, prioritize "Zero-Cost" abstractions and the new specialized interpreter optimizations found in 3.14.
 
 ## 4. Code Style & Linting
 - **Formatter/Linter:** Exclusively use **Ruff** for linting and formatting via `uv run ruff`.
 - **Task Runner:** Use `uv run` for all project-level tasks.
-
-## 5. Shell & Terminal
-- **Ghostty:** The user uses Ghostty with JetBrainsMono NF. Output should be clean and utilize ANSI colors where appropriate for terminal tools.
-- **eza:** Use `eza --icons` when suggesting directory listing commands.

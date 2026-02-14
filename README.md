@@ -157,6 +157,24 @@ uv run pytest --cov=pothole_report --cov-report=term-missing
 uv run ruff check src/
 ```
 
+### Keeping up to date (Python & dependencies)
+
+Staying on a recent Python and current dependencies helps with security (including TLS) and fixes. Common approaches:
+
+- **Dependabot (GitHub):** Free on all plans, including free tier. Enable it and you get PRs when dependencies or the lockfile have known vulnerabilities or updates. This repo includes a [Dependabot config](.github/dependabot.yml); turn on *Dependabot alerts* (and optionally *Dependabot security updates*) under the repo **Settings → Code security and analysis**.
+- **Manual:** Run `uv lock --upgrade` periodically and run tests; upgrade Python when you’re ready (e.g. 3.14.x) via your usual install method (Homebrew, pyenv, etc.).
+- **CI:** Optionally add a workflow that runs tests on Dependabot PRs so you can merge with confidence.
+
+Python itself is not managed by Dependabot; upgrade the interpreter when new patch/minor versions are released.
+
+**GitHub setup (one-time):** To turn on Dependabot and have CI run on PRs:
+
+1. Open your repo on GitHub → **Settings** → **Code security and analysis**.
+2. Under **Dependabot alerts**, click **Enable** (scans for known vulnerabilities).
+3. Under **Dependabot security updates**, click **Enable** (opens PRs to fix vulnerable dependencies).
+4. (Optional) Under **Dependabot version updates**, enable if you want PRs for non-security updates too; this repo’s [.github/dependabot.yml](.github/dependabot.yml) is already set to run weekly on **Sundays** (09:00 UK).
+5. CI runs automatically: push or open a PR to `main`/`develop` and the **Actions** tab will show the workflow (uv, pytest, ruff). No extra setup needed for Actions on public repos.
+
 ## License
 
 See [License.md](License.md).
