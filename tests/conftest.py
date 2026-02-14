@@ -9,7 +9,7 @@ import pytest
 def temp_config(tmp_path: Path) -> Path:
     """Create a temporary config file (no email - from keyring) and return its path."""
     config_path = tmp_path / "pothole-report.yaml"
-    config_content = '''report_url: "https://example.fillthathole.org"
+    config_content = """report_url: "https://example.fillthathole.org"
 attributes:
   depth:
     lt40mm: "Less than 40mm (sub-intervention)"
@@ -38,7 +38,7 @@ advice_for_reporters:
     - "Test phrase 1"
     - "Test phrase 2"
   pro_tip: "Test pro tip"
-'''
+"""
     config_path.write_text(config_content, encoding="utf-8")
     return config_path
 
@@ -53,5 +53,3 @@ def temp_photo_dir(tmp_path: Path) -> Path:
     img = Image.new("RGB", (1, 1), color="red")
     img.save(img_path, "JPEG")
     return tmp_path
-
-

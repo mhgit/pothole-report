@@ -93,7 +93,10 @@ def test_build_report_record_strips_trailing_slash() -> None:
         advice_for_reporters={"key_phrases": [], "pro_tip": ""},
         image_names=["x.jpg"],
     )
-    assert record.fill_that_hole_url == "https://fillthathole.org.uk/around?lat=0.0&lon=0.0&zoom=4"
+    assert (
+        record.fill_that_hole_url
+        == "https://fillthathole.org.uk/around?lat=0.0&lon=0.0&zoom=4"
+    )
 
 
 def test_print_report_no_crash() -> None:
@@ -260,8 +263,14 @@ def test_print_report_with_check_links() -> None:
 
     record = _make_record()
     check_links = [
-        ("Fill That Hole", "https://www.fillthathole.org.uk/around?lat=51.0&lon=0.0&zoom=16"),
-        ("Surrey (Tell Us)", "https://tellus.surreycc.gov.uk/reports/Surrey?lat=51.0&lon=0.0"),
+        (
+            "Fill That Hole",
+            "https://www.fillthathole.org.uk/around?lat=51.0&lon=0.0&zoom=16",
+        ),
+        (
+            "Surrey (Tell Us)",
+            "https://tellus.surreycc.gov.uk/reports/Surrey?lat=51.0&lon=0.0",
+        ),
     ]
     console = Console(file=StringIO(), force_terminal=False)
     print_report(record, console=console, check_links=check_links)
