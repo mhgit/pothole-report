@@ -177,4 +177,4 @@ Python itself is not managed by Dependabot; upgrade the interpreter when new pat
 
 ## License
 
-See [License.md](License.md).
+See the [LICENSE.md](LICENSE.md) file for license rights and limitations (MIT).
