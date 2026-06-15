@@ -129,8 +129,8 @@ def test_print_report_no_crash() -> None:
     assert "XX1 1XX" in out
 
 
-def test_print_report_includes_image_table() -> None:
-    """print_report includes image names in a table (4 images => 2 rows)."""
+def test_print_report_includes_image_list() -> None:
+    """print_report lists all image names."""
     from io import StringIO
 
     from rich.console import Console
@@ -180,7 +180,7 @@ def test_print_report_includes_attributes() -> None:
         attribute_descriptions={"depth": "Greater than 50mm", "edge": "Sharp edges"},
         generated_report_text="Test report text",
         command_line="uv run report-pothole -f /path --depth gt50mm --edge sharp",
-        advice_for_reporters_text="[bold]Key Phrases:[/] phrase1, phrase2\n[bold]Pro Tip:[/] Test tip",
+        advice_for_reporters_text="Key Phrases: phrase1, phrase2\nPro Tip: Test tip",
         email="t@t.com",
         image_names=["test.jpg"],
     )
@@ -215,7 +215,7 @@ def test_print_report_includes_advice_section() -> None:
         attribute_descriptions={"depth": "40mm or greater"},
         generated_report_text="Test report",
         command_line="uv run report-pothole -f /path --depth gte40mm",
-        advice_for_reporters_text="[bold]Key Phrases:[/] phrase1, phrase2\n[bold]Pro Tip:[/] Test tip",
+        advice_for_reporters_text="Key Phrases: phrase1, phrase2\nPro Tip: Test tip",
         email="t@t.com",
         image_names=["test.jpg"],
     )
@@ -253,6 +253,24 @@ def _make_record(**overrides) -> ReportRecord:
     }
     defaults.update(overrides)
     return ReportRecord(**defaults)
+
+
+def test_print_report_no_box_drawing_chars() -> None:
+    """print_report uses plain text without box-drawing characters."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    box_chars = set("┌┐└┘│─├┤┬┴┼╭╮╰╯═║╔╗╚╝")
+    record = _make_record(
+        advice_for_reporters_text="Key Phrases: a, b\nPro Tip: tip",
+        image_names=["img1.jpg", "img2.jpg"],
+    )
+    check_links = [("Fill That Hole", "https://example.com/around?lat=51.0&lon=0.0")]
+    console = Console(file=StringIO(), force_terminal=False)
+    print_report(record, console=console, check_links=check_links)
+    out = console.file.getvalue()
+    assert not any(char in box_chars for char in out)
 
 
 def test_print_report_with_check_links() -> None:

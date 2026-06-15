@@ -1,12 +1,9 @@
-"""Rich-formatted output for report bundles."""
+"""Terminal output for report bundles (plain text, copy-paste friendly)."""
 
 from dataclasses import dataclass
 from pathlib import Path
 
-from rich.console import Console, Group
-from rich.panel import Panel
-from rich.table import Table
-from rich.text import Text
+from rich.console import Console
 
 from pothole_report.extract import ExtractedData
 from pothole_report.geocode import GeocodedResult
@@ -58,11 +55,11 @@ def build_report_record(
     key_phrases = advice_for_reporters.get("key_phrases", [])
     if key_phrases:
         phrases_str = ", ".join(key_phrases)
-        advice_lines.append(f"[bold]Key Phrases:[/] {phrases_str}")
+        advice_lines.append(f"Key Phrases: {phrases_str}")
 
     pro_tip = advice_for_reporters.get("pro_tip", "")
     if pro_tip:
-        advice_lines.append(f"[bold]Pro Tip:[/] {pro_tip}")
+        advice_lines.append(f"Pro Tip: {pro_tip}")
 
     advice_text = "\n".join(advice_lines) if advice_lines else ""
 
@@ -85,18 +82,11 @@ def build_report_record(
     )
 
 
-def _image_table(image_names: list[str]) -> Table:
-    """Build a 3-column table of image names, wrapping every third image."""
-    table = Table(show_header=False)
-    table.add_column(style="cyan")
-    table.add_column(style="cyan")
-    table.add_column(style="cyan")
-    for i in range(0, len(image_names), 3):
-        row = image_names[i : i + 3]
-        while len(row) < 3:
-            row.append("")
-        table.add_row(*row)
-    return table
+def _format_image_list(image_names: list[str]) -> str:
+    """Format image names as an indented list."""
+    if not image_names:
+        return "  (none)"
+    return "\n".join(f"  {name}" for name in image_names)
 
 
 def print_report(
@@ -104,81 +94,76 @@ def print_report(
     console: Console | None = None,
     check_links: list[tuple[str, str]] | None = None,
 ) -> None:
-    """Print one report bundle as a Rich panel.
+    """Print one report bundle as plain text (no box borders).
 
     Args:
         record: The report data to display.
         console: Rich console (defaults to a new Console).
         check_links: Optional list of (name, url) tuples for existing-reports
-            panel.  When non-empty an "Existing pothole reports" panel is
-            printed *above* the main report.
+            links.  When non-empty an "Existing pothole reports" section is
+            printed above the main report.
     """
     c = console or Console()
+    lines: list[str] = []
 
-    # --- "Existing pothole reports" panel (printed first, if any) ----------
     if check_links:
-        link_lines = []
+        lines.append("Existing pothole reports")
+        lines.append("")
         for name, url in check_links:
-            link_lines.append(
-                f"[bold]{name}:[/] [bold cyan][link={url}]{url}[/link][/]"
-            )
-        check_body = Text.from_markup("\n".join(link_lines))
-        c.print(
-            Panel(
-                check_body,
-                title="Existing pothole reports",
-                border_style="green",
-            )
-        )
-        c.print()  # blank line between panels
+            lines.append(f"{name}: {url}")
+        lines.append("")
 
-    # --- Main report panel -------------------------------------------------
-    dt = record.datetime_taken if record.datetime_taken else "—"
-    fth_link = f"[bold cyan][link={record.fill_that_hole_url}]Fill That Hole[/link][/]"
-    gm_link = f"[bold cyan][link={record.google_maps_url}]Google Maps[/link][/]"
+    dt = record.datetime_taken if record.datetime_taken else "n/a"
 
-    # Build attributes section
     attr_lines = []
     for attr_name in sorted(record.attributes.keys()):
         desc = record.attribute_descriptions.get(attr_name, "")
         if desc:
-            # Show only descriptions without keys for all attributes
             attr_lines.append(f"  {attr_name}: ({desc})")
         else:
-            # Fallback: show key if no description available
             attr_value = record.attributes[attr_name]
             attr_lines.append(f"  {attr_name}: {attr_value}")
     attributes_text = "\n".join(attr_lines) if attr_lines else "  (none)"
 
-    body_text = (
-        f"[bold]File:[/] {record.path.name}\n"
-        f"[bold]Date/Time taken:[/] {dt}\n"
-        f"[bold]Postcode:[/] {record.postcode}\n"
-        f"[bold]Address:[/] {record.address}\n"
-        f"[bold]Coordinates:[/] {record.lat:.4f}, {record.lon:.4f}\n\n"
-        f"[bold]Fill That Hole:[/] {fth_link}\n\n"
-        f"[bold]Google Maps:[/] {gm_link}\n\n"
-        f"[bold]Attributes:[/]\n{attributes_text}\n\n"
-        f"[bold]Report:[/]\n{record.generated_report_text}\n\n"
-        f"[bold]Report as:[/] {record.email}\n\n"
+    lines.extend(
+        [
+            f"Report: {record.path.name}",
+            "",
+            f"File: {record.path.name}",
+            f"Date/Time taken: {dt}",
+            f"Postcode: {record.postcode}",
+            f"Address: {record.address}",
+            f"Coordinates: {record.lat:.4f}, {record.lon:.4f}",
+            "",
+            f"Fill That Hole: {record.fill_that_hole_url}",
+            f"Google Maps: {record.google_maps_url}",
+            "",
+            "Attributes:",
+            attributes_text,
+            "",
+            "Report:",
+            record.generated_report_text,
+            "",
+            f"Report as: {record.email}",
+        ]
     )
 
-    # Advice for reporters section (above image listing)
-    advice_panel = None
     if record.advice_for_reporters_text:
-        advice_panel = Panel(
-            Text.from_markup(record.advice_for_reporters_text),
-            title="Advice for Reporters",
-            border_style="yellow",
+        lines.extend(
+            [
+                "",
+                "Advice for Reporters",
+                "",
+                record.advice_for_reporters_text,
+            ]
         )
 
-    img_table = _image_table(record.image_names)
+    lines.extend(
+        [
+            "",
+            "Images:",
+            _format_image_list(record.image_names),
+        ]
+    )
 
-    # Build content group (without command line - it goes outside the box)
-    content_parts = [Text.from_markup(body_text.strip())]
-    if advice_panel:
-        content_parts.append(advice_panel)
-    content_parts.append(img_table)
-
-    content = Group(*content_parts)
-    c.print(Panel(content, title=f"Report: {record.path.name}", border_style="blue"))
+    c.print("\n".join(lines))

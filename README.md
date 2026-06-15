@@ -136,14 +136,14 @@ uv run report-pothole remove-keyring -c conf/pothole-report.yaml  # remove store
 
 One report per folder. The report includes:
 
-- **Existing pothole reports** panel (above the main report) — clickable links to check if a defect is already reported (e.g. Fill That Hole map, Surrey Tell Us). Requires `conf/pothole-checking.yaml`; see [Check sites config](#check-sites-config-optional).
+- **Existing pothole reports** section (above the main report) — plain URLs to check if a defect is already reported (e.g. Fill That Hole map, Surrey Tell Us). Requires `conf/pothole-checking.yaml`; see [Check sites config](#check-sites-config-optional).
 - **Postcode** and address (from reverse geocoding)
-- **Fill That Hole** and **Google Maps** (clickable cyan links in the report body)
+- **Fill That Hole** and **Google Maps** (plain URLs in the report body)
 - **Attributes** section (lists selected attributes with descriptions, e.g., "depth: gt50mm (Greater than 50mm)")
 - **Generated Report** (dynamically generated text based on selected attributes, ready to copy-paste for council forms)
 - **Advice for Reporters** section (includes key phrases and pro tips)
 - **Date/time** from the earliest-dated image (used for GPS)
-- **Image listing** (3-column table of all images in the folder)
+- **Image listing** (one filename per line)
 
 The report text is generated from the `report_template` using the selected attributes. The system looks up phrases from `attribute_phrases` based on attribute combinations to fill template placeholders.
 
