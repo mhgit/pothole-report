@@ -7,6 +7,15 @@ version: 2
 updates:
   - package-ecosystem: "uv"
     directory: "/"
+    # Version updates are raised against develop, our integration branch, and
+    # reach main via the normal develop -> main promotion.
+    #
+    # NOTE: this does NOT apply to security updates. Dependabot always raises
+    # security PRs against the repository's default branch (main), and ignores
+    # the per-ecosystem config below for them, so the "security" group and the
+    # "deps" commit prefix have no effect on those. Expect security PRs to
+    # arrive on main ungrouped; merge them there, then sync develop from main.
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "sunday"
@@ -20,7 +29,8 @@ updates:
       version-updates:
         applies-to: "version-updates"
         patterns: ["*"]
-      # Single PR for all security updates
+      # Single PR for all security updates. Retained for the day GitHub lets
+      # target-branch apply to security updates; currently inert (see above).
       security:
         applies-to: "security-updates"
         patterns: ["*"]
