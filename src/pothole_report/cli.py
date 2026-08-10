@@ -47,7 +47,7 @@ def _generate_report_text(attributes: dict, config: dict) -> str:
     # Priority order: depth, edge, location (for severity determination)
     severity_key_parts = []
     for key in ["depth", "edge", "location"]:
-        if key in attributes and attributes[key]:
+        if attributes.get(key):
             # For location, use first value for severity lookup
             loc_values = _parse_value(attributes[key])
             if loc_values:
@@ -65,7 +65,7 @@ def _generate_report_text(attributes: dict, config: dict) -> str:
 
     # For each attribute category, look up the phrase
     for attr_name in ["depth", "edge", "width", "location", "visibility", "surface"]:
-        if attr_name in attributes and attributes[attr_name]:
+        if attributes.get(attr_name):
             attr_value = attributes[attr_name]
             phrase_key = f"{attr_name}_description"
 

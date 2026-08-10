@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pothole_report.extract import ExtractedData
 from pothole_report.geocode import GeocodedResult
-from pothole_report.output import build_report_record, print_report, ReportRecord
+from pothole_report.output import ReportRecord, build_report_record, print_report
 
 
 def test_build_report_record_uses_attributes() -> None:
