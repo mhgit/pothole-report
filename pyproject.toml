@@ -25,6 +25,23 @@ report-pothole = "pothole_report.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.ruff]
+# Ruff's default rule set is not stable across releases: 0.16 expanded it from
+# ~59 rules to ~413. Select rules explicitly so an upgrade never silently
+# changes what CI enforces.
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E4",  # pycodestyle: imports
+    "E7",  # pycodestyle: statements
+    "E9",  # pycodestyle: runtime/syntax errors
+    "F",   # pyflakes
+    "I",   # isort: import ordering
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific rules
+]
+
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",

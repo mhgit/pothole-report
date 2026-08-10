@@ -156,7 +156,7 @@ def load_config(config_path: Path | None = None) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Check-config (pothole-checking.yaml) – separate file for existing reports
+# Check-config (pothole-checking.yaml) - separate file for existing reports
 # ---------------------------------------------------------------------------
 
 
