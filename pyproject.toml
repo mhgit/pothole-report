@@ -46,5 +46,5 @@ select = [
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.0.0",
-    "ruff>=0.16.1",
+    "ruff>=0.16.2",
 ]
