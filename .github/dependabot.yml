@@ -29,8 +29,21 @@ updates:
       version-updates:
         applies-to: "version-updates"
         patterns: ["*"]
-      # Single PR for all security updates. Retained for the day GitHub lets
-      # target-branch apply to security updates; currently inert (see above).
+
+  # Security updates: only ever run on the default branch, so this entry has no
+  # target-branch. open-pull-requests-limit: 0 disables version updates here so
+  # they are not duplicated against main.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "09:00"
+      timezone: "Europe/London"
+    open-pull-requests-limit: 0
+    commit-message:
+      prefix: "deps"
+    groups:
       security:
         applies-to: "security-updates"
         patterns: ["*"]
